@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card as CardType, GameState, GameSettings, Theme } from '../types';
 import { Card } from './Card';
 import { Pile } from './Pile';
@@ -9,6 +9,7 @@ import { VictoryAnimation } from './VictoryAnimation';
 import { Analyzer } from './Analyzer';
 import { findWinningPath, applyMove, GameMove, translateMoveToHint } from '../utils/solver';
 import { playCardDealSound, playCardMoveSound, playErrorSound, playVictorySound, playCardPlaceSound, playCardFlipSound } from '../utils/audio';
+import { ParticleOverlay, ParticleOverlayHandle } from './ParticleOverlay';
 
 interface BoardProps {
   settings: GameSettings;
@@ -32,6 +33,7 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
   const [isDeepSearching, setIsDeepSearching] = useState(false);
   const [isDeadEnd, setIsDeadEnd] = useState(false);
   const [winningPath, setWinningPath] = useState<GameMove[] | null>(null);
+  const particleRef = useRef<ParticleOverlayHandle>(null);
 
   // Timer
   useEffect(() => {
@@ -172,6 +174,10 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
     if (canMoveToFoundation(card, foundation)) {
       saveHistory(gameState);
       moveCard(source, `foundation-${foundationIndex}`, card, 10);
+      // Fire particles at drop location
+      if (settings.sfxEnabled) {
+        particleRef.current?.emit(e.clientX, e.clientY, theme.id);
+      }
     } else {
       if (settings.sfxEnabled) playErrorSound();
     }
@@ -266,6 +272,12 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
         if (canMoveToFoundation(card, gameState.foundations[i])) {
           saveHistory(gameState);
           moveCard(source, `foundation-${i}`, card, 10, stackIndex);
+          // Fire particles at the foundation pile DOM element
+          const el = document.querySelector(`[data-foundation="${i}"]`);
+          if (el) {
+            const rect = el.getBoundingClientRect();
+            particleRef.current?.emit(rect.left + rect.width / 2, rect.top + rect.height / 2, theme.id);
+          }
           return;
         }
       }
@@ -549,7 +561,7 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
         </div>
         <div className="col-span-1" style={{ order: settings.leftHandedMode ? 5 : 3 }}></div> {/* Empty space */}
         {gameState.foundations.map((foundation, i) => (
-          <div key={`foundation-${i}`} className="col-span-1" style={{ order: settings.leftHandedMode ? i + 1 : i + 4 }}>
+          <div key={`foundation-${i}`} className="col-span-1" style={{ order: settings.leftHandedMode ? i + 1 : i + 4 }} data-foundation={i}>
             <Pile
               onDrop={(e) => handleDropOnFoundation(e, i)}
               emptyText="A"
@@ -632,6 +644,9 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
           }}
         />
       )}
+
+      {/* Particle Canvas Overlay */}
+      <ParticleOverlay ref={particleRef} />
     </div>
   );
 };
