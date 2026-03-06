@@ -31,6 +31,14 @@
 * **Left-Handed & Large Print Modes**: Instantly mirror the game board to place the stock on the right, or drastically increase the SVG font scales for accessibility.
 * **Fast "Tap-to-Move"**: Swiftly single-click cards to logically snap them to foundations or compatible tableaus without tedious dragging.
 
+## 🎭 Phase 3: Mechanical Delight
+
+* **3D Card Flip Animation**: CSS `rotateY` perspective transform creates a physical 180ms card-turn when face-down cards are revealed.
+* **Foundation Drop Particles**: Theme-aware canvas spark effects burst from foundation piles — silver motes (Abyssal Void), gold chips (Classic Luxury), pastel sparkles (Ethereal Light), ember fragments (Maratha Glory).
+* **Audio-Reactive Table Felt**: An `AnalyserNode` maps real-time audio amplitude to a subtle radial glow pulse on the board background, making every card sound feel physical.
+* **The Advisor**: A floating atmospheric narrator that delivers theme-voiced commentary triggered by game events (first foundation, empty columns, halfway marks, good streaks, and idle timeouts).
+* **🔥 Daily Seed Challenge**: A globally identical daily seed derived from a deterministic date hash, with streak tracking and completion stamps.
+
 ## 🚀 Run Locally
 
 **Prerequisites:** Node.js (v18+)
