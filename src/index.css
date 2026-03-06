@@ -1,3 +1,39 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── 3D Card Flip ─────────────────────────────────────────────────────── */
+.card-flip-perspective {
+  perspective: 600px;
+}
+
+.card-flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.18s ease-in-out;
+}
+
+.card-flip-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+.card-face-front {
+  transform: rotateY(180deg);
+  z-index: 2;
+}
+
+.card-face-back {
+  transform: rotateY(0deg);
+  z-index: 1;
+}

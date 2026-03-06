@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card as CardType, Theme } from '../types';
 import { CARD_CHARACTERS } from '../lotm';
 import { MARATHA_CHARACTERS } from '../maratha';
@@ -16,6 +16,79 @@ interface CardProps {
   style?: React.CSSProperties;
 }
 
+// ─── Card Back Renderers ──────────────────────────────────────────────────────
+
+const CardBackContent: React.FC<{ theme: Theme; onClick?: () => void; style?: React.CSSProperties }> = ({ theme, onClick, style }) => {
+  if (theme.cardBackImageUrl) {
+    return (
+      <div
+        className="w-full h-full rounded-lg shadow-md flex items-center justify-center bg-zinc-900 bg-cover bg-center bg-no-repeat overflow-hidden border-[1px] sm:border-2 border-zinc-500/80 relative"
+        style={{ ...style, backgroundImage: `url(${theme.cardBackImageUrl})` }}
+        onClick={onClick}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 rounded-lg shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] pointer-events-none" />
+      </div>
+    );
+  } else if (theme.cardBack === 'mystic-back') {
+    return (
+      <div
+        className="w-full h-full rounded-lg border-2 border-zinc-500/80 shadow-[0_0_15px_rgba(0,0,0,0.8)] flex items-center justify-center bg-zinc-900 overflow-hidden relative"
+        style={{
+          ...style,
+          backgroundImage: 'radial-gradient(circle at 50% 50%, #27272a 0%, #000000 100%)'
+        }}
+        onClick={onClick}
+      >
+        <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_50%_50%,rgba(161,161,170,0.4)_0%,transparent_70%)] animate-pulse" style={{ animationDuration: '4s' }} />
+        <div className="absolute w-[200%] h-[200%] animate-spin opacity-20 bg-[conic-gradient(from_0deg,transparent,rgba(212,212,216,0.3),transparent)] rounded-full blur-2xl" style={{ animationDuration: '20s' }} />
+        <div className="absolute inset-3 sm:inset-4 border border-zinc-500/30 rounded-lg flex items-center justify-center">
+          <div className="w-12 h-6 sm:w-16 sm:h-8 border-2 border-zinc-400/80 rounded-[100%] flex items-center justify-center shadow-[0_0_15px_rgba(161,161,170,0.5)] relative overflow-hidden z-10">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(228,228,231,0.5)_0%,transparent_60%)] animate-pulse" style={{ animationDuration: '3s' }} />
+          </div>
+          <div className="absolute w-20 h-20 sm:w-28 sm:h-28 border-[1px] border-zinc-500/40 rounded-full animate-spin" style={{ animationDuration: '30s' }} />
+          <div className="absolute w-24 h-24 sm:w-32 sm:h-32 border-[1px] border-dashed border-zinc-500/30 rounded-full animate-spin" style={{ animationDuration: '40s', animationDirection: 'reverse' }} />
+          <div className="absolute w-16 h-16 sm:w-20 sm:h-20 border-[1px] border-zinc-400/20 rotate-45" />
+          <div className="absolute top-2 left-2 text-[8px] sm:text-[10px] text-zinc-500/80 font-serif">◯</div>
+          <div className="absolute top-2 right-2 text-[8px] sm:text-[10px] text-zinc-500/80 font-serif">△</div>
+          <div className="absolute bottom-2 left-2 text-[8px] sm:text-[10px] text-zinc-500/80 font-serif">◇</div>
+          <div className="absolute bottom-2 right-2 text-[8px] sm:text-[10px] text-zinc-500/80 font-serif">☆</div>
+        </div>
+      </div>
+    );
+  } else if (theme.cardBack === 'luxury-back') {
+    return (
+      <div
+        className="w-full h-full rounded-lg border-[3px] border-amber-600/80 shadow-md flex flex-col items-center justify-center bg-stone-900 overflow-hidden relative"
+        style={style}
+        onClick={onClick}
+      >
+        <div className="absolute inset-1.5 border border-amber-500/30 rounded-sm" />
+        <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,rgba(0,0,0,0)_0px,rgba(0,0,0,0)_10px,rgba(245,158,11,0.05)_10px,rgba(245,158,11,0.05)_20px)]" />
+        <div className="w-12 h-12 rotate-45 border-4 border-amber-600/50 flex flex-col items-center justify-center relative">
+          <div className="absolute inset-1 border border-amber-500/40" />
+          <div className="w-4 h-4 rounded-full bg-amber-600/80 shadow-[0_0_15px_rgba(245,158,11,0.5)]" />
+        </div>
+      </div>
+    );
+  }
+
+  // Default Ethereal or generic back
+  return (
+    <div
+      className="w-full h-full rounded-lg shadow-md flex items-center justify-center overflow-hidden bg-slate-200 border-2 border-white/50 relative"
+      style={style}
+      onClick={onClick}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-200/50 via-purple-200/50 to-pink-200/50" />
+      <div className="absolute inset-2 border border-blue-400/20 rounded-md" />
+      <div className="w-full h-full border-4 border-transparent rounded-md opacity-30 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(255,255,255,0.4)_10px,rgba(255,255,255,0.4)_20px)]" />
+    </div>
+  );
+};
+
+// ─── Main Card Component ──────────────────────────────────────────────────────
+
 export const Card: React.FC<CardProps> = ({
   card,
   theme,
@@ -28,13 +101,25 @@ export const Card: React.FC<CardProps> = ({
   style = {},
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
+
+  // Track previous isFaceUp to detect flip transitions
+  const prevFaceUp = useRef(card.isFaceUp);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  useEffect(() => {
+    if (prevFaceUp.current !== card.isFaceUp) {
+      setIsAnimating(true);
+      const timer = setTimeout(() => setIsAnimating(false), 180); // match CSS transition duration
+      prevFaceUp.current = card.isFaceUp;
+      return () => clearTimeout(timer);
+    }
+  }, [card.isFaceUp]);
+
   const character = theme.id === 'maratha-glory'
     ? MARATHA_CHARACTERS[card.suit]?.[card.rank]
     : CARD_CHARACTERS[card.suit]?.[card.rank];
-  const imageUrl = card.isFaceUp ? getCardImageUrl(theme.id, card.suit, card.rank) : '';
-
-  // We allow an error state to kick in if the static image is missing.
-  const [imageFailed, setImageFailed] = useState(false);
+  const imageUrl = getCardImageUrl(theme.id, card.suit, card.rank);
 
   const handleDragStart = (e: React.DragEvent) => {
     if (isDraggable && onDragStart) {
@@ -55,89 +140,16 @@ export const Card: React.FC<CardProps> = ({
 
   const draggingClasses = isDragging ? 'opacity-30 scale-90 grayscale-[70%] blur-[1px]' : '';
 
-  if (!card.isFaceUp && !thoughtfulMode) {
-    if (theme.cardBackImageUrl) {
-      return (
-        <div
-          className={`w-full aspect-[2/3] rounded-lg shadow-md flex items-center justify-center bg-zinc-900 bg-cover bg-center bg-no-repeat overflow-hidden border-[1px] sm:border-2 border-zinc-500/80 relative transition-transform duration-300 ${className}`}
-          style={{ ...style, backgroundImage: `url(${theme.cardBackImageUrl})` }}
-          onClick={onClick}
-        >
-          {/* Subtle overlay to ensure it still looks like a card */}
-          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
-          <div className="absolute inset-0 rounded-lg shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] pointer-events-none" />
-        </div>
-      );
-    } else if (theme.cardBack === 'mystic-back') {
-      return (
-        <div
-          className={`w-full aspect-[2/3] rounded-lg border-2 border-zinc-500/80 shadow-[0_0_15px_rgba(0,0,0,0.8)] flex items-center justify-center bg-zinc-900 overflow-hidden relative ${className}`}
-          style={{
-            ...style,
-            backgroundImage: 'radial-gradient(circle at 50% 50%, #27272a 0%, #000000 100%)'
-          }}
-          onClick={onClick}
-        >
-          {/* Sefirah Castle Gray Fog mist */}
-          <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_50%_50%,rgba(161,161,170,0.4)_0%,transparent_70%)] animate-pulse" style={{ animationDuration: '4s' }} />
-          <div className="absolute w-[200%] h-[200%] animate-spin opacity-20 bg-[conic-gradient(from_0deg,transparent,rgba(212,212,216,0.3),transparent)] rounded-full blur-2xl" style={{ animationDuration: '20s' }} />
+  // ── Thoughtful Mode: face-down but visible ──
+  // In thoughtful mode, show the face content but with a grayscale filter
+  const isThoughtfulHidden = !card.isFaceUp && thoughtfulMode;
+  const filterStyle = isThoughtfulHidden ? { filter: 'grayscale(100%) opacity(60%)' } : {};
 
-          {/* The Fool's Emblem: Pupil-less Eye and Contorted Lines */}
-          <div className="absolute inset-3 sm:inset-4 border border-zinc-500/30 rounded-lg flex items-center justify-center">
-            {/* The Eye Shape */}
-            <div className="w-12 h-6 sm:w-16 sm:h-8 border-2 border-zinc-400/80 rounded-[100%] flex items-center justify-center shadow-[0_0_15px_rgba(161,161,170,0.5)] relative overflow-hidden z-10">
-              {/* Pupil-less interior (glowing fog) */}
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(228,228,231,0.5)_0%,transparent_60%)] animate-pulse" style={{ animationDuration: '3s' }} />
-            </div>
-
-            {/* Contorted Lines surrounding the eye */}
-            <div className="absolute w-20 h-20 sm:w-28 sm:h-28 border-[1px] border-zinc-500/40 rounded-full animate-spin" style={{ animationDuration: '30s' }} />
-            <div className="absolute w-24 h-24 sm:w-32 sm:h-32 border-[1px] border-dashed border-zinc-500/30 rounded-full animate-spin" style={{ animationDuration: '40s', animationDirection: 'reverse' }} />
-            <div className="absolute w-16 h-16 sm:w-20 sm:h-20 border-[1px] border-zinc-400/20 rotate-45" />
-
-            {/* Corner Runes */}
-            <div className="absolute top-2 left-2 text-[8px] sm:text-[10px] text-zinc-500/80 font-serif">◯</div>
-            <div className="absolute top-2 right-2 text-[8px] sm:text-[10px] text-zinc-500/80 font-serif">△</div>
-            <div className="absolute bottom-2 left-2 text-[8px] sm:text-[10px] text-zinc-500/80 font-serif">◇</div>
-            <div className="absolute bottom-2 right-2 text-[8px] sm:text-[10px] text-zinc-500/80 font-serif">☆</div>
-          </div>
-        </div>
-      );
-    } else if (theme.cardBack === 'luxury-back') {
-      return (
-        <div
-          className={`w-full aspect-[2/3] rounded-lg border-[3px] border-amber-600/80 shadow-md flex flex-col items-center justify-center bg-stone-900 overflow-hidden relative ${className}`}
-          style={style}
-          onClick={onClick}
-        >
-          <div className="absolute inset-1.5 border border-amber-500/30 rounded-sm" />
-          <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,rgba(0,0,0,0)_0px,rgba(0,0,0,0)_10px,rgba(245,158,11,0.05)_10px,rgba(245,158,11,0.05)_20px)]" />
-          <div className="w-12 h-12 rotate-45 border-4 border-amber-600/50 flex flex-col items-center justify-center relative">
-            <div className="absolute inset-1 border border-amber-500/40" />
-            <div className="w-4 h-4 rounded-full bg-amber-600/80 shadow-[0_0_15px_rgba(245,158,11,0.5)]" />
-          </div>
-        </div>
-      );
-    }
-
-    // Default Ethereal or generic back
-    return (
-      <div
-        className={`w-full aspect-[2/3] rounded-lg shadow-md flex items-center justify-center overflow-hidden bg-slate-200 border-2 border-white/50 relative ${className}`}
-        style={style}
-        onClick={onClick}
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-200/50 via-purple-200/50 to-pink-200/50" />
-        <div className="absolute inset-2 border border-blue-400/20 rounded-md" />
-        <div className="w-full h-full border-4 border-transparent rounded-md opacity-30 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(255,255,255,0.4)_10px,rgba(255,255,255,0.4)_20px)]" />
-      </div>
-    );
-  }
+  // Determine if the card is showing face up (either actually face up, or thoughtful mode)
+  const showFaceUp = card.isFaceUp || thoughtfulMode;
 
   const isRed = card.suit === 'hearts' || card.suit === 'diamonds';
   const suitStyleClass = theme.suitStyles[card.suit as keyof typeof theme.suitStyles];
-  const lotmCharacter = character as { name: string; title: string };
-  const marathaCharacter = character as any as { entity: string; title: string };
 
   const suitSymbol = {
     hearts: '♥',
@@ -146,23 +158,17 @@ export const Card: React.FC<CardProps> = ({
     spades: '♠',
   }[card.suit];
 
-  const filterStyle = (!card.isFaceUp && thoughtfulMode) ? { filter: 'grayscale(100%) opacity(60%)' } : {};
-
-  return (
+  // ── Face Content (shared between normal and thoughtful rendering) ──
+  const faceContent = (
     <div
-      draggable={isDraggable}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onClick={onClick}
-      className={`relative w-full aspect-[2/3] rounded-lg ${suitStyleClass.background} border-[1px] sm:border-2 ${suitStyleClass.border} shadow-lg flex items-center justify-center overflow-hidden ${interactiveClasses} ${draggingClasses} ${className}`}
+      className={`w-full h-full rounded-lg ${suitStyleClass.background} border-[1px] sm:border-2 ${suitStyleClass.border} shadow-lg flex items-center justify-center overflow-hidden relative`}
       style={{
-        ...style,
         fontFamily: theme.fontFamily,
         boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
         ...filterStyle
       }}
     >
-      {/* Image Layer - Shown if there is an image URL and we haven't failed to load it */}
+      {/* Image Layer */}
       {imageUrl && !imageFailed && (
         <div className="absolute inset-0 z-0 overflow-hidden rounded-lg pointer-events-none">
           <img
@@ -222,6 +228,46 @@ export const Card: React.FC<CardProps> = ({
       <div className={`absolute bottom-1 right-1 sm:bottom-2 sm:right-2 flex flex-col items-center leading-none rotate-180 ${suitStyleClass.text} z-10 ${theme.showCharacters ? 'drop-shadow-[0_2px_4px_rgba(0,0,0,1)] bg-black/60 backdrop-blur-md px-1 sm:px-1.5 py-1 sm:py-1.5 rounded border border-white/10 shadow-lg' : ''}`}>
         <span className="text-sm sm:text-lg md:text-xl font-bold">{card.rank}</span>
         <span className={`text-xs sm:text-sm md:text-base ${theme.showCharacters ? 'mt-0.5' : ''} ${suitStyleClass.symbol}`}>{suitSymbol}</span>
+      </div>
+    </div>
+  );
+
+  // ── 3D Flip Container ──
+  // When thoughtful mode is on and card is face-down, skip the 3D flip (just show face content with filter)
+  if (isThoughtfulHidden) {
+    return (
+      <div
+        draggable={false}
+        onClick={onClick}
+        className={`relative w-full aspect-[2/3] ${className}`}
+        style={style}
+      >
+        {faceContent}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      draggable={isDraggable}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onClick={onClick}
+      className={`relative w-full aspect-[2/3] card-flip-perspective ${interactiveClasses} ${draggingClasses} ${className}`}
+      style={style}
+    >
+      <div className={`card-flip-inner ${card.isFaceUp ? 'flipped' : ''} ${isAnimating ? 'scale-x-[0.96]' : ''}`}
+        style={{ transition: isAnimating ? 'transform 0.18s ease-in-out' : 'transform 0.18s ease-in-out' }}
+      >
+        {/* Back Face (visible when not flipped) */}
+        <div className="card-face card-face-back">
+          <CardBackContent theme={theme} />
+        </div>
+
+        {/* Front Face (visible when flipped) */}
+        <div className="card-face card-face-front">
+          {faceContent}
+        </div>
       </div>
     </div>
   );

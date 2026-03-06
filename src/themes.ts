@@ -83,25 +83,25 @@ export const THEMES: Theme[] = [
             hearts: {
                 text: 'text-rose-500',
                 symbol: 'text-rose-400 drop-shadow-[0_0_4px_rgba(251,113,133,0.5)]',
-                background: 'bg-white/80 backdrop-blur-sm',
+                background: 'bg-white',
                 border: 'border-white',
             },
             diamonds: {
                 text: 'text-orange-500',
                 symbol: 'text-orange-400 drop-shadow-[0_0_4px_rgba(251,146,60,0.5)]',
-                background: 'bg-white/80 backdrop-blur-sm',
+                background: 'bg-white',
                 border: 'border-white',
             },
             spades: {
                 text: 'text-slate-700',
                 symbol: 'text-slate-500 drop-shadow-[0_0_4px_rgba(100,116,139,0.5)]',
-                background: 'bg-white/80 backdrop-blur-sm',
+                background: 'bg-white',
                 border: 'border-white',
             },
             clubs: {
                 text: 'text-teal-600',
                 symbol: 'text-teal-400 drop-shadow-[0_0_4px_rgba(45,212,191,0.5)]',
-                background: 'bg-white/80 backdrop-blur-sm',
+                background: 'bg-white',
                 border: 'border-white',
             }
         }
