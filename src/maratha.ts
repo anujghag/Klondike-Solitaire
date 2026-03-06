@@ -1,0 +1,67 @@
+export interface CardCharacter {
+    name: string;
+    title: string;
+}
+
+export const MARATHA_CHARACTERS: Record<string, Record<string, CardCharacter>> = {
+    spades: {
+        'A': { name: 'Chhatrapati Shivaji Maharaj', title: 'The Legendary Founder' },
+        'K': { name: 'Chhatrapati Sambhaji Maharaj', title: 'The Fierce Warrior King' },
+        'Q': { name: 'Tarabai', title: 'The Warrior Queen' },
+        'J': { name: 'Bahirji Naik', title: 'The Master Spymaster' },
+        '10': { name: 'Tanaji Malusare', title: 'Lion of Sinhagad' },
+        '9': { name: 'Baji Prabhu Deshpande', title: 'Hero of Pawankhind' },
+        '8': { name: 'Murarbaji Deshpande', title: 'Defender of Purandar' },
+        '7': { name: 'Prataprao Gujar', title: 'Royal Cavalry Chief' },
+        '6': { name: 'Hambirrao Mohite', title: 'Commander-in-Chief' },
+        '5': { name: 'Netaji Palkar', title: 'Master of Guerrilla Warfare' },
+        '4': { name: 'Santaji Ghorpade', title: 'Lightning Cavalry General' },
+        '3': { name: 'Dhanaji Jadhav', title: 'Master Tactician' },
+        '2': { name: 'Kanhoji Angre', title: 'The Naval Chief' },
+    },
+    hearts: {
+        'A': { name: 'Rajmata Jijabai', title: 'The Visionary Mother' },
+        'K': { name: 'Shahaji Raje Bhosale', title: 'The Noble Father' },
+        'Q': { name: 'Putalabai', title: 'Queen Consort' },
+        'J': { name: 'Soyarabai', title: 'Queen Consort' },
+        '10': { name: 'Rajaram Maharaj', title: 'The Third Chhatrapati' },
+        '9': { name: 'Shahu Maharaj', title: 'The Successful Grandson' },
+        '8': { name: 'Maloji Bhosale', title: 'The Respected Grandfather' },
+        '7': { name: 'Gomaji Naik Pansambal', title: 'The Experienced Mentor' },
+        '6': { name: 'Baji Pasalkar', title: 'The Wise Associate' },
+        '5': { name: 'Maharani Yesubai', title: 'The Brave Wife' },
+        '4': { name: 'Kavi Kalash', title: 'The Loyal Friend' },
+        '3': { name: 'Jiva Mahala', title: 'The Savior' },
+        '2': { name: 'Shiva Kashid', title: 'The Heroic Lookalike' },
+    },
+    diamonds: {
+        'A': { name: 'Raigad Fort', title: 'The Impregnable Capital' },
+        'K': { name: 'Moropant Trimbak Pingle', title: 'Peshwa (Prime Minister)' },
+        'Q': { name: 'Ramchandra Pant Amatya', title: 'Finance Minister' },
+        'J': { name: 'Annaji Datto', title: 'Sachiv (Secretary)' },
+        '10': { name: 'Pratapgad Fort', title: 'The Emerald Forest Fort' },
+        '9': { name: 'Shivneri Fort', title: 'The Sacred Birthplace' },
+        '8': { name: 'Rajgad Fort', title: 'The First Capital' },
+        '7': { name: 'Sindhudurg Fort', title: 'The Naval Fortress' },
+        '6': { name: 'Dattaji Trimbak Waknis', title: 'Mantri (Interior Minister)' },
+        '5': { name: 'Niraji Raoji', title: 'Nyayadhish (Chief Justice)' },
+        '4': { name: 'Moreshwar Pandurang', title: 'Panditrao (High Priest)' },
+        '3': { name: 'Purandar Fort', title: 'Site of the Great Siege' },
+        '2': { name: 'Panhala Fort', title: 'The Legendary Escape Route' },
+    },
+    clubs: {
+        'A': { name: 'Bhavani Sword', title: 'The Divine Blade' },
+        'K': { name: 'Bhagwa Dhwaj', title: 'The Saffron Flag' },
+        'Q': { name: 'Bagh Nakh', title: 'The Tiger Claws' },
+        'J': { name: 'Zirjat', title: 'Traditional Armor' },
+        '10': { name: 'Firangi', title: 'The Straight Sword' },
+        '9': { name: 'Dandpatta', title: 'The Gauntlet Sword' },
+        '8': { name: 'Bhimthadi', title: 'The War Horse' },
+        '7': { name: 'Mavlas', title: 'The Fierce Infantry' },
+        '6': { name: 'Dhal', title: 'The Intricate Shield' },
+        '5': { name: 'Tutari', title: 'The War Trumpet' },
+        '4': { name: 'Rajmudra', title: 'The Royal Seal' },
+        '3': { name: 'Ghorpad', title: 'The Legendary Lizard' },
+        '2': { name: 'Nagari', title: 'The War Drum' },
+    }
+};
