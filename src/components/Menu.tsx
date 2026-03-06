@@ -188,6 +188,51 @@ export const Menu: React.FC<MenuProps> = ({ stats, currentTheme, currentSettings
                 </div>
               </div>
             </div>
+
+            {/* Daily Challenge Section */}
+            <div className="mt-8 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 p-6 rounded-2xl">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-bold text-amber-400 mb-1 flex items-center gap-2">
+                    🔥 Daily Challenge
+                    {stats.dailyStreak > 0 && (
+                      <span className="text-sm bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full">
+                        {stats.dailyStreak} day streak
+                      </span>
+                    )}
+                  </h3>
+                  <p className="text-sm text-white/60">
+                    A new challenge every day — same seed for everyone. 
+                    {stats.completedDailies?.includes(new Date().toISOString().split('T')[0]) 
+                      ? ' ✅ Completed today!' 
+                      : ' Can you beat it?'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    // Deterministic daily seed hash from today's date
+                    const today = new Date().toISOString().split('T')[0];
+                    let hash = 0;
+                    for (let i = 0; i < today.length; i++) {
+                      hash = ((hash << 5) - hash + today.charCodeAt(i)) | 0;
+                    }
+                    const seedPool = WINNABLE_SEEDS_DRAW_3;
+                    const dailySeed = seedPool[Math.abs(hash) % seedPool.length];
+                    const finalSettings: GameSettings = {
+                      ...localSettings,
+                      difficulty: 'normal' as Difficulty,
+                      customSeed: dailySeed,
+                    };
+                    setLocalSettings(finalSettings);
+                    onStart(finalSettings);
+                  }}
+                  disabled={stats.completedDailies?.includes(new Date().toISOString().split('T')[0])}
+                  className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:from-white/10 disabled:to-white/10 disabled:text-white/30 disabled:cursor-not-allowed text-stone-900 font-bold px-8 py-3 rounded-xl transition-all shadow-lg hover:shadow-amber-500/20 whitespace-nowrap"
+                >
+                  {stats.completedDailies?.includes(new Date().toISOString().split('T')[0]) ? '✅ Done' : '▶ Play Today\'s'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

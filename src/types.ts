@@ -49,6 +49,8 @@ export interface Stats {
   bestStreak: Record<Difficulty, number>;
   themeWins: Record<string, number>;
   achievements: Achievement[];
+  completedDailies: string[];  // ISO date strings e.g. '2026-03-07'
+  dailyStreak: number;
 }
 
 export interface SuitStyle {

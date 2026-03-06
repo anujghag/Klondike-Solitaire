@@ -20,6 +20,8 @@ const DEFAULT_STATS: Stats = {
   bestStreak: { easy: 0, normal: 0, hard: 0 },
   themeWins: {},
   achievements: INITIAL_ACHIEVEMENTS,
+  completedDailies: [],
+  dailyStreak: 0,
 };
 
 const DEFAULT_SETTINGS: GameSettings = {
@@ -141,6 +143,35 @@ export default function App() {
     if (settings.difficulty === 'hard') unlock('flawless');
 
     newStats.achievements = ach;
+
+    // Daily Challenge tracking
+    const today = new Date().toISOString().split('T')[0];
+    if (settings.customSeed !== undefined) {
+      // Check if this seed matches today's daily seed
+      const WINNABLE_SEEDS_DRAW_3 = require('../utils/knownSeeds').WINNABLE_SEEDS_DRAW_3;
+      let hash = 0;
+      for (let i = 0; i < today.length; i++) {
+        hash = ((hash << 5) - hash + today.charCodeAt(i)) | 0;
+      }
+      const dailySeed = WINNABLE_SEEDS_DRAW_3[Math.abs(hash) % WINNABLE_SEEDS_DRAW_3.length];
+      if (settings.customSeed === dailySeed && !newStats.completedDailies?.includes(today)) {
+        newStats.completedDailies = [...(newStats.completedDailies || []), today];
+        // Calculate streak
+        let streak = 1;
+        const d = new Date();
+        while (true) {
+          d.setDate(d.getDate() - 1);
+          const prev = d.toISOString().split('T')[0];
+          if (newStats.completedDailies.includes(prev)) {
+            streak++;
+          } else {
+            break;
+          }
+        }
+        newStats.dailyStreak = streak;
+      }
+    }
+
     saveStats(newStats);
 
     alert(`You won!\nScore: ${gameStats.score}\nTime: ${gameStats.time}s\nMoves: ${gameStats.moves}`);
