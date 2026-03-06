@@ -1,5 +1,6 @@
 import { Card, Rank, Suit, GameState } from '../types';
 import { findWinningPath } from './solver';
+import { WINNABLE_SEEDS_DRAW_1, WINNABLE_SEEDS_DRAW_3 } from './knownSeeds';
 
 const SUITS: Suit[] = ['hearts', 'diamonds', 'clubs', 'spades'];
 const RANKS: Rank[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
@@ -22,49 +23,40 @@ export function createDeck(): Card[] {
   return deck;
 }
 
-export function shuffleDeck(deck: Card[]): Card[] {
+export function mulberry32(a: number) {
+  return function() {
+    let t = a += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  }
+}
+
+export function shuffleDeck(deck: Card[], rng: () => number = Math.random): Card[] {
   const newDeck = [...deck];
   for (let i = newDeck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rng() * (i + 1));
     [newDeck[i], newDeck[j]] = [newDeck[j], newDeck[i]];
   }
   return newDeck;
 }
 
-export function dealGame(drawCount: number = 3, guaranteedWinnable: boolean = false) {
-  let attempt = 0;
-
-  while (true) {
-    attempt++;
-    const state = generateRandomGame();
-
-    if (!guaranteedWinnable) {
-      return state;
-    }
-
-    // Try to solve it synchronously. Limit to 5000 iterations to avoid hanging the browser too long.
-    const solver = findWinningPath(state, drawCount, 5000);
-
-    let result = solver.next();
-    while (!result.done) {
-      result = solver.next();
-    }
-
-    // result.value contains the move path if it was found
-    if (result.value !== null) {
-      console.log(`Found a winnable game on attempt ${attempt}!`);
-      return state;
-    }
-
-    if (attempt > 20) {
-      console.warn("Could not find a guaranteed winnable game within 20 attempts. Returning best effort.");
-      return state; // Escape hatch so we don't freeze forever
-    }
+export function dealGame(drawCount: number = 3, customSeed?: number) {
+  if (customSeed !== undefined && !isNaN(customSeed)) {
+    console.log(`Dealing custom game using specific seed ${customSeed} (Draw ${drawCount})`);
+    return generateRandomGame(customSeed);
   }
+
+  // Pick a random known winnable seed
+  const seedPool = drawCount === 1 ? WINNABLE_SEEDS_DRAW_1 : WINNABLE_SEEDS_DRAW_3;
+  const randomSeed = seedPool[Math.floor(Math.random() * seedPool.length)];
+  console.log(`Dealing guaranteed winnable game using seed ${randomSeed} (Draw ${drawCount})`);
+  return generateRandomGame(randomSeed);
 }
 
-function generateRandomGame(): GameState {
-  const deck = shuffleDeck(createDeck());
+export function generateRandomGame(seed?: number): GameState {
+  const rng = seed !== undefined ? mulberry32(seed) : Math.random;
+  const deck = shuffleDeck(createDeck(), rng);
   const tableaus: Card[][] = Array.from({ length: 7 }, () => []);
 
   for (let i = 0; i < 7; i++) {

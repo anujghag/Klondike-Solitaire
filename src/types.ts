@@ -14,8 +14,12 @@ export type Difficulty = 'easy' | 'normal' | 'hard';
 
 export interface GameSettings {
   difficulty: Difficulty;
+  customSeed?: number;            // Optional explicit seed
+  scoringType: 'standard' | 'vegas';  // Standard increments points, Vegas starts at -$52 and adds $5 per foundation card
+  sfxEnabled: boolean;            // If true, plays generated web audio sounds
+  leftHandedMode: boolean;        // If true, Stock/Waste are on the right, Foundations on the left
+  largePrintMode: boolean;        // If true, highly increases font/icon sizes on the cards
   thoughtfulMode: boolean;        // If true, all face-down cards are visible but grayed out
-  guaranteedWinnable: boolean;    // If true, generate deals until a winnable one is found
   autoPlayEnabled: boolean;       // If true, show a button to let the deep solver play the game
 }
 
@@ -40,6 +44,10 @@ export interface Stats {
   highScores: Record<Difficulty, number>;
   fastestTimes: Record<Difficulty, number>;
   totalWins: Record<Difficulty, number>;
+  totalGames: Record<Difficulty, number>;
+  currentStreak: Record<Difficulty, number>;
+  bestStreak: Record<Difficulty, number>;
+  themeWins: Record<string, number>;
   achievements: Achievement[];
 }
 

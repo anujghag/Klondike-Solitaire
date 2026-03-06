@@ -8,6 +8,7 @@ interface CardProps {
   card: CardType;
   theme: Theme;
   thoughtfulMode?: boolean;
+  largePrintMode?: boolean;
   isDraggable?: boolean;
   onDragStart?: (e: React.DragEvent, card: CardType) => void;
   onClick?: () => void;
@@ -19,6 +20,7 @@ export const Card: React.FC<CardProps> = ({
   card,
   theme,
   thoughtfulMode = false,
+  largePrintMode = false,
   isDraggable = false,
   onDragStart,
   onClick,
@@ -190,9 +192,9 @@ export const Card: React.FC<CardProps> = ({
       )}
 
       {/* Top Left */}
-      <div className={`absolute top-1 left-1 sm:top-2 sm:left-2 flex flex-col items-center leading-none ${suitStyleClass.text} z-10 ${theme.showCharacters ? 'drop-shadow-[0_2px_4px_rgba(0,0,0,1)] bg-black/60 backdrop-blur-md px-1 sm:px-1.5 py-1 sm:py-1.5 rounded border border-white/10 shadow-lg' : ''}`}>
-        <span className="text-sm sm:text-lg md:text-xl font-bold">{card.rank}</span>
-        <span className={`text-xs sm:text-sm md:text-base ${theme.showCharacters ? 'mt-0.5' : ''} ${suitStyleClass.symbol}`}>{suitSymbol}</span>
+      <div className={`absolute top-1 left-1 sm:top-2 sm:left-2 flex flex-col items-center leading-none ${suitStyleClass.text} z-10 ${theme.showCharacters || largePrintMode ? 'drop-shadow-[0_2px_4px_rgba(0,0,0,1)] bg-black/60 backdrop-blur-md px-1 sm:px-1.5 py-1 sm:py-1.5 rounded border border-white/10 shadow-lg' : ''}`}>
+        <span className={`font-bold ${largePrintMode ? 'text-2xl sm:text-3xl md:text-4xl drop-shadow-md' : 'text-sm sm:text-lg md:text-xl'}`}>{card.rank}</span>
+        <span className={`${largePrintMode ? 'text-xl sm:text-2xl md:text-3xl' : 'text-xs sm:text-sm md:text-base'} ${theme.showCharacters ? 'mt-0.5' : ''} ${suitStyleClass.symbol}`}>{suitSymbol}</span>
       </div>
 
       {/* Center */}

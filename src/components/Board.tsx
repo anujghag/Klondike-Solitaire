@@ -6,7 +6,9 @@ import { canMoveToFoundation, canMoveToTableau, checkWin, getHint } from '../uti
 import { dealGame } from '../utils/deck';
 import { Undo2, Lightbulb, FastForward, Settings, Trophy, Cpu, AlertTriangle } from 'lucide-react';
 import { VictoryAnimation } from './VictoryAnimation';
+import { Analyzer } from './Analyzer';
 import { findWinningPath, applyMove, GameMove, translateMoveToHint } from '../utils/solver';
+import { playCardDealSound, playCardMoveSound, playErrorSound, playVictorySound, playCardPlaceSound, playCardFlipSound } from '../utils/audio';
 
 interface BoardProps {
   settings: GameSettings;
@@ -16,10 +18,14 @@ interface BoardProps {
 }
 
 export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) => {
-  const [gameState, setGameState] = useState<GameState>(() =>
-    dealGame(settings.difficulty === 'easy' ? 1 : 3, settings.guaranteedWinnable)
-  );
+  const [gameState, setGameState] = useState<GameState>(() => {
+    const initialState = dealGame(settings.difficulty === 'easy' ? 1 : 3, settings.customSeed);
+    if (settings.scoringType === 'vegas') initialState.score = -52;
+    return initialState;
+  });
   const [history, setHistory] = useState<GameState[]>([]);
+  const [fullHistory, setFullHistory] = useState<GameState[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [hint, setHint] = useState<Array<{ from: string; to: string; card?: CardType }>>([]);
   const [isAutoCompleting, setIsAutoCompleting] = useState(false);
   const [isWon, setIsWon] = useState(false);
@@ -39,6 +45,7 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
   // Check Win
   useEffect(() => {
     if (checkWin(gameState.foundations) && !isWon) {
+      if (settings.sfxEnabled) playVictorySound();
       setIsWon(true);
     }
   }, [gameState.foundations, isWon]);
@@ -81,6 +88,7 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
   }, [gameState, isWon, isAutoCompleting, isDeepSearching, settings.difficulty]);
 
   const saveHistory = (state: GameState) => {
+    setFullHistory(prev => [...prev, state]);
     if (settings.difficulty === 'hard') return; // No undos in hard mode
     setHistory(prev => {
       const newHistory = [...prev, state];
@@ -96,12 +104,25 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
     const previousState = history[history.length - 1];
     setGameState(previousState);
     setHistory(prev => prev.slice(0, -1));
+    setFullHistory(prev => prev.slice(0, -1));
     setHint([]);
+  };
+
+  const handleRedraw = () => {
+    const initialState = dealGame(settings.difficulty === 'easy' ? 1 : 3, settings.customSeed);
+    if (settings.scoringType === 'vegas') initialState.score = -52;
+    setGameState(initialState);
+    setHistory([]);
+    setFullHistory([]);
+    setHint([]);
+    setIsDeadEnd(false);
+    setWinningPath(null);
   };
 
   const drawCard = () => {
     saveHistory(gameState);
     setHint([]);
+    if (settings.sfxEnabled) playCardDealSound();
     setGameState(prev => {
       const drawCount = settings.difficulty === 'easy' ? 1 : 3;
       const newStock = [...prev.stock];
@@ -116,7 +137,7 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
           stock: resetStock,
           waste: [],
           moves: prev.moves + 1,
-          score: Math.max(0, prev.score - 20), // Penalty for recycling
+          score: settings.scoringType === 'vegas' ? prev.score : Math.max(0, prev.score - 20), // Penalty for recycling only in standard
         };
       }
 
@@ -151,6 +172,8 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
     if (canMoveToFoundation(card, foundation)) {
       saveHistory(gameState);
       moveCard(source, `foundation-${foundationIndex}`, card, 10);
+    } else {
+      if (settings.sfxEnabled) playErrorSound();
     }
   };
 
@@ -164,15 +187,29 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
     if (canMoveToTableau(card, tableau)) {
       saveHistory(gameState);
       moveCard(source, `tableau-${tableauIndex}`, card, 5, stackIndex);
+    } else {
+      if (settings.sfxEnabled) playErrorSound();
     }
   };
 
   const moveCard = (source: string, destination: string, card: CardType, scoreDelta: number, stackIndex: number = -1) => {
+    if (settings.sfxEnabled) {
+      if (destination.startsWith('foundation')) {
+        playCardPlaceSound();
+      } else {
+        playCardMoveSound();
+      }
+    }
     setGameState(prev => {
+      let actualScoreDelta = scoreDelta;
+      if (settings.scoringType === 'vegas') {
+        actualScoreDelta = destination.startsWith('foundation') ? 5 : 0;
+      }
+
       const newState = {
         ...prev,
         moves: prev.moves + 1,
-        score: prev.score + scoreDelta,
+        score: prev.score + actualScoreDelta,
         waste: [...prev.waste],
         foundations: prev.foundations.map(f => [...f]),
         tableaus: prev.tableaus.map(t => [...t])
@@ -186,7 +223,7 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
       } else if (source.startsWith('foundation')) {
         const idx = parseInt(source.split('-')[1]);
         movingCards = [newState.foundations[idx].pop()!];
-        newState.score -= 15; // Penalty for moving from foundation
+        newState.score -= settings.scoringType === 'vegas' ? 5 : 15; // Penalty for moving from foundation
       } else if (source.startsWith('tableau')) {
         const idx = parseInt(source.split('-')[1]);
         const tableau = newState.tableaus[idx];
@@ -195,7 +232,8 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
         // Flip top card if needed
         if (tableau.length > 0 && !tableau[tableau.length - 1].isFaceUp) {
           tableau[tableau.length - 1] = { ...tableau[tableau.length - 1], isFaceUp: true };
-          newState.score += 5;
+          if (settings.scoringType === 'standard') newState.score += 5;
+          if (settings.sfxEnabled) setTimeout(() => playCardFlipSound(), 150); // Small delay to separate from move snap
         }
       }
 
@@ -212,21 +250,47 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
     });
   };
 
-  const handleDoubleClick = (card: CardType, source: string, stackIndex: number) => {
-    // Only double click top cards
+  const handleQuickMove = (card: CardType, source: string, stackIndex: number) => {
+    if (!card.isFaceUp) return;
+
+    // Check if it's the top card of the stack or a completely face-up stack (for tableau-to-tableau dragging vs clicking)
+    // Actually, for Quick Move, we usually only move the entire valid stack or the top card. 
+    // If it's a top card:
     let isTop = false;
     if (source === 'waste' && stackIndex === gameState.waste.length - 1) isTop = true;
     if (source.startsWith('tableau') && stackIndex === gameState.tableaus[parseInt(source.split('-')[1])].length - 1) isTop = true;
 
-    if (!isTop) return;
-
-    for (let i = 0; i < 4; i++) {
-      if (canMoveToFoundation(card, gameState.foundations[i])) {
-        saveHistory(gameState);
-        moveCard(source, `foundation-${i}`, card, 10, stackIndex);
-        return;
+    // 1. Try to move to foundation first (only possible for single top cards)
+    if (isTop) {
+      for (let i = 0; i < 4; i++) {
+        if (canMoveToFoundation(card, gameState.foundations[i])) {
+          saveHistory(gameState);
+          moveCard(source, `foundation-${i}`, card, 10, stackIndex);
+          return;
+        }
       }
     }
+
+    // 2. Try to move to a tableau (can move a stack if card is logically at the bottom of a face-up sequence)
+    // To keep it simple and match standard tap-to-move, if a user taps a face-up card in the middle of a tableau stack,
+    // we try to move that card (and all cards on top of it) to another valid tableau.
+    for (let i = 0; i < 7; i++) {
+      const targetTableau = gameState.tableaus[i];
+      // Prevent moving a stack to the exact same tableau
+      if (source === `tableau-${i}`) continue;
+
+      if (canMoveToTableau(card, targetTableau)) {
+        // Only move kings to empty spots if they are NOT already at the bottom of a column to avoid infinite loops
+        const isKingAtBottom = card.value === 13 && stackIndex === 0 && source.startsWith('tableau');
+        if (!isKingAtBottom) {
+          saveHistory(gameState);
+          moveCard(source, `tableau-${i}`, card, 5, stackIndex);
+          return;
+        }
+      }
+    }
+
+    if (settings.sfxEnabled) playErrorSound();
   };
 
   const showHint = () => {
@@ -370,16 +434,34 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
       style={theme.tableImageUrl ? { backgroundImage: `url(${theme.tableImageUrl})` } : undefined}
     >
       {/* Header */}
-      <div className="flex flex-wrap justify-between items-center mb-8 bg-black/20 p-4 rounded-xl text-white shadow-lg backdrop-blur-sm relative">
+      <div className="flex flex-wrap justify-between items-center mb-8 bg-black/20 p-4 rounded-xl text-white shadow-lg backdrop-blur-sm relative transition-all">
         {isDeadEnd && (
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1 animate-bounce">
-            <AlertTriangle size={14} /> DEAD END REACHED
-          </div>
+          fullHistory.length === 0 ? (
+            <button
+              onClick={handleRedraw}
+              className="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-500 hover:bg-red-400 text-white text-xs sm:text-sm font-bold px-4 py-1.5 rounded-full shadow-[0_0_15px_rgba(239,68,68,0.5)] flex items-center gap-2 animate-bounce cursor-pointer transition-colors z-20"
+            >
+              <AlertTriangle size={16} />
+              <span>UNWINNABLE DEAL &mdash; REDRAW NOW?</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setIsAnalyzing(true)}
+              className="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-500 hover:bg-red-400 text-white text-xs sm:text-sm font-bold px-4 py-1.5 rounded-full shadow-[0_0_15px_rgba(239,68,68,0.5)] flex items-center gap-2 animate-bounce cursor-pointer transition-colors z-20"
+            >
+              <AlertTriangle size={16} />
+              <span>DEAD END REACHED &mdash; ANALYZE MISTAKE?</span>
+            </button>
+          )
         )}
         <div className="flex items-center gap-4 sm:gap-8">
           <div className="flex flex-col">
             <span className="text-xs uppercase tracking-wider opacity-70">Score</span>
-            <span className="text-xl sm:text-2xl font-mono font-bold">{gameState.score}</span>
+            <span className={`text-xl sm:text-2xl font-mono font-bold ${gameState.score < 0 && settings.scoringType === 'vegas' ? 'text-rose-400' : ''}`}>
+              {settings.scoringType === 'vegas'
+                ? (gameState.score < 0 ? `-$${Math.abs(gameState.score)}` : `$${gameState.score}`)
+                : gameState.score}
+            </span>
           </div>
           <div className="flex flex-col">
             <span className="text-xs uppercase tracking-wider opacity-70">Moves</span>
@@ -428,14 +510,14 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
       {/* Game Board */}
       <div className="max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto w-full grid grid-cols-7 gap-1 sm:gap-2 md:gap-3">
         {/* Top Row */}
-        <div className="col-span-1">
+        <div className="col-span-1" style={{ order: settings.leftHandedMode ? 7 : 1 }}>
           <Pile onClick={drawCard} className="cursor-pointer hover:bg-black/20 transition-colors w-full">
             {gameState.stock.length > 0 && (
-              <Card card={gameState.stock[gameState.stock.length - 1]} theme={theme} />
+              <Card card={gameState.stock[gameState.stock.length - 1]} theme={theme} largePrintMode={settings.largePrintMode} />
             )}
           </Pile>
         </div>
-        <div className="col-span-1">
+        <div className="col-span-1" style={{ order: settings.leftHandedMode ? 6 : 2 }}>
           <Pile className="w-full">
             {gameState.waste.length > 0 && (
               <div className="relative w-full h-full">
@@ -450,11 +532,12 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
                       style={{ left: `${offset * 12}%`, zIndex: i }}
                     >
                       <Card
+                        largePrintMode={settings.largePrintMode}
                         card={card}
                         theme={theme}
                         isDraggable={i === arr.length - 1}
                         onDragStart={(e) => handleDragStart(e, card, 'waste', gameState.waste.length - 1)}
-                        onClick={() => handleDoubleClick(card, 'waste', gameState.waste.length - 1)}
+                        onClick={() => handleQuickMove(card, 'waste', gameState.waste.length - 1)}
                         className={hint.some(h => h.from === 'waste' && i === arr.length - 1) ? 'ring-4 ring-yellow-400 animate-pulse' : ''}
                       />
                     </div>
@@ -464,9 +547,9 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
             )}
           </Pile>
         </div>
-        <div className="col-span-1"></div> {/* Empty space */}
+        <div className="col-span-1" style={{ order: settings.leftHandedMode ? 5 : 3 }}></div> {/* Empty space */}
         {gameState.foundations.map((foundation, i) => (
-          <div key={`foundation-${i}`} className="col-span-1">
+          <div key={`foundation-${i}`} className="col-span-1" style={{ order: settings.leftHandedMode ? i + 1 : i + 4 }}>
             <Pile
               onDrop={(e) => handleDropOnFoundation(e, i)}
               emptyText="A"
@@ -474,6 +557,7 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
             >
               {foundation.length > 0 && (
                 <Card
+                  largePrintMode={settings.largePrintMode}
                   card={foundation[foundation.length - 1]}
                   theme={theme}
                   isDraggable={true}
@@ -486,7 +570,7 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
 
         {/* Bottom Row: Tableaus */}
         {gameState.tableaus.map((tableau, i) => (
-          <div key={`tableau-${i}`} className="col-span-1 mt-2 sm:mt-4 md:mt-6">
+          <div key={`tableau-${i}`} className="col-span-1 mt-2 sm:mt-4 md:mt-6 order-last">
             <Pile
               onDrop={(e) => handleDropOnTableau(e, i)}
               className="w-full border-none bg-transparent"
@@ -510,12 +594,13 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
                         style={{ top: `${topOffset}%`, zIndex: j }}
                       >
                         <Card
+                          largePrintMode={settings.largePrintMode}
                           card={card}
                           theme={theme}
                           thoughtfulMode={settings.thoughtfulMode}
                           isDraggable={card.isFaceUp}
                           onDragStart={(e) => handleDragStart(e, card, `tableau-${i}`, j)}
-                          onClick={() => handleDoubleClick(card, `tableau-${i}`, j)}
+                          onClick={() => handleQuickMove(card, `tableau-${i}`, j)}
                           className={`${isHintSource ? 'ring-4 ring-yellow-400 animate-pulse' : ''} ${isHintDest ? 'ring-4 ring-yellow-400/50 animate-pulse' : ''}`}
                         />
                       </div>
@@ -532,6 +617,19 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
         <VictoryAnimation
           theme={theme}
           onComplete={() => onWin({ time: gameState.time, moves: gameState.moves, score: gameState.score })}
+        />
+      )}
+
+      {isAnalyzing && (
+        <Analyzer
+          history={[...fullHistory, gameState]}
+          drawCount={settings.difficulty === 'easy' ? 1 : 3}
+          onClose={() => setIsAnalyzing(false)}
+          onRestore={(state, index) => {
+            setGameState(state);
+            setFullHistory(prev => prev.slice(0, index));
+            setHistory([]);
+          }}
         />
       )}
     </div>
