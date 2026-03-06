@@ -51,6 +51,8 @@ export interface Stats {
   achievements: Achievement[];
   completedDailies: string[];  // ISO date strings e.g. '2026-03-07'
   dailyStreak: number;
+  runProgress: Record<string, number>;  // runId -> number of seeds completed (0-5)
+  completedRuns: string[];              // runIds of fully completed gauntlets
 }
 
 export interface SuitStyle {

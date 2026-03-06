@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
 import { Difficulty, Theme, Stats, GameSettings } from '../types';
-import { Trophy, Play, Settings, Palette, Check, Beaker } from 'lucide-react';
+import { Trophy, Play, Settings, Palette, Check, Beaker, Swords } from 'lucide-react';
 import { THEMES } from '../themes';
 import { WINNABLE_SEEDS_DRAW_1, WINNABLE_SEEDS_DRAW_3 } from '../utils/knownSeeds';
+import { RogueliteRuns } from './RogueliteRuns';
 
 interface MenuProps {
   stats: Stats;
   currentTheme: Theme;
   currentSettings: GameSettings;
   onStart: (settings: GameSettings) => void;
+  onStartRun: (settings: GameSettings, runId: string) => void;
   onThemeChange: (theme: Theme) => void;
 }
 
-export const Menu: React.FC<MenuProps> = ({ stats, currentTheme, currentSettings, onStart, onThemeChange }) => {
-  const [activeTab, setActiveTab] = useState<'play' | 'stats' | 'themes' | 'settings'>('play');
+export const Menu: React.FC<MenuProps> = ({ stats, currentTheme, currentSettings, onStart, onStartRun, onThemeChange }) => {
+  const [activeTab, setActiveTab] = useState<'play' | 'stats' | 'themes' | 'settings' | 'runs'>('play');
   const [localSettings, setLocalSettings] = useState<GameSettings>(currentSettings);
   const [customDrawCount, setCustomDrawCount] = useState<number>(3);
   const [seedError, setSeedError] = useState<string>('');
@@ -105,6 +107,13 @@ export const Menu: React.FC<MenuProps> = ({ stats, currentTheme, currentSettings
               }`}
           >
             <Palette size={20} /> Themes
+          </button>
+          <button
+            onClick={() => setActiveTab('runs')}
+            className={`px-4 py-2 sm:px-6 sm:py-3 rounded-full font-semibold flex items-center gap-2 transition-all ${activeTab === 'runs' ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg scale-105' : 'bg-white/10 hover:bg-white/20'
+              }`}
+          >
+            <Swords size={20} /> Runs
           </button>
         </div>
 
@@ -449,6 +458,10 @@ export const Menu: React.FC<MenuProps> = ({ stats, currentTheme, currentSettings
               </button>
             ))}
           </div>
+        )}
+
+        {activeTab === 'runs' && (
+          <RogueliteRuns stats={stats} onStartRun={onStartRun} />
         )}
       </div>
     </div>

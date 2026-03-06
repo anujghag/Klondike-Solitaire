@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Board } from './components/Board';
 import { Menu } from './components/Menu';
 import { Difficulty, Theme, Stats, Achievement, GameSettings } from './types';
-import { DEFAULT_THEME } from './themes';
+import { DEFAULT_THEME, THEMES } from './themes';
+import { ROGUELITE_RUNS } from './utils/seedDifficulty';
 
 const INITIAL_ACHIEVEMENTS: Achievement[] = [
   { id: 'first_win', name: 'First Victory', description: 'Win your first game of Solitaire.', unlocked: false },
@@ -22,6 +23,8 @@ const DEFAULT_STATS: Stats = {
   achievements: INITIAL_ACHIEVEMENTS,
   completedDailies: [],
   dailyStreak: 0,
+  runProgress: {},
+  completedRuns: [],
 };
 
 const DEFAULT_SETTINGS: GameSettings = {
@@ -101,6 +104,21 @@ export default function App() {
     setGameState('playing');
   };
 
+  // — Roguelite Runs —
+  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+
+  const handleStartRun = (newSettings: GameSettings, runId: string) => {
+    const run = ROGUELITE_RUNS.find(r => r.id === runId);
+    if (!run) return;
+
+    // Switch to the run's theme
+    const runTheme = THEMES.find(t => t.id === run.themeId);
+    if (runTheme) handleThemeChange(runTheme);
+
+    setActiveRunId(runId);
+    handleStart(newSettings);
+  };
+
   const handleWin = (gameStats: { time: number; moves: number; score: number }) => {
     const newStats = { ...stats };
     const diff = settings.difficulty;
@@ -174,6 +192,21 @@ export default function App() {
 
     saveStats(newStats);
 
+    // Roguelite Run progress
+    if (activeRunId) {
+      const runStatsUpdate = { ...newStats };
+      runStatsUpdate.runProgress = { ...(runStatsUpdate.runProgress || {}) };
+      const currentProgress = runStatsUpdate.runProgress[activeRunId] || 0;
+      runStatsUpdate.runProgress[activeRunId] = currentProgress + 1;
+      
+      const run = ROGUELITE_RUNS.find(r => r.id === activeRunId);
+      if (run && runStatsUpdate.runProgress[activeRunId] >= run.seeds.length) {
+        runStatsUpdate.completedRuns = [...(runStatsUpdate.completedRuns || []), activeRunId];
+      }
+      saveStats(runStatsUpdate);
+      setActiveRunId(null);
+    }
+
     alert(`You won!\nScore: ${gameStats.score}\nTime: ${gameStats.time}s\nMoves: ${gameStats.moves}`);
     setGameState('menu');
   };
@@ -193,6 +226,7 @@ export default function App() {
           currentTheme={theme}
           currentSettings={settings}
           onStart={handleStart}
+          onStartRun={handleStartRun}
           onThemeChange={handleThemeChange}
         />
       ) : (
