@@ -37,3 +37,23 @@
   transform: rotateY(0deg);
   z-index: 1;
 }
+
+/* ─── Audio-Reactive Board Pulse ──────────────────────────────────────── */
+.audio-reactive-board {
+  --audio-glow: 0;
+  position: relative;
+}
+
+.audio-reactive-board::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9990;
+  background: radial-gradient(
+    ellipse at 50% 60%,
+    rgba(255, 255, 255, calc(var(--audio-glow) * 0.08)),
+    transparent 70%
+  );
+  transition: opacity 0.05s ease-out;
+}

@@ -8,7 +8,7 @@ import { Undo2, Lightbulb, FastForward, Settings, Trophy, Cpu, AlertTriangle } f
 import { VictoryAnimation } from './VictoryAnimation';
 import { Analyzer } from './Analyzer';
 import { findWinningPath, applyMove, GameMove, translateMoveToHint } from '../utils/solver';
-import { playCardDealSound, playCardMoveSound, playErrorSound, playVictorySound, playCardPlaceSound, playCardFlipSound } from '../utils/audio';
+import { playCardDealSound, playCardMoveSound, playErrorSound, playVictorySound, playCardPlaceSound, playCardFlipSound, getAudioReactivity } from '../utils/audio';
 import { ParticleOverlay, ParticleOverlayHandle } from './ParticleOverlay';
 
 interface BoardProps {
@@ -34,6 +34,22 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
   const [isDeadEnd, setIsDeadEnd] = useState(false);
   const [winningPath, setWinningPath] = useState<GameMove[] | null>(null);
   const particleRef = useRef<ParticleOverlayHandle>(null);
+  const boardRef = useRef<HTMLDivElement>(null);
+
+  // Audio reactivity animation loop
+  useEffect(() => {
+    if (!settings.sfxEnabled) return;
+    let rafId: number;
+    const tick = () => {
+      const level = getAudioReactivity();
+      if (boardRef.current) {
+        boardRef.current.style.setProperty('--audio-glow', String(level));
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [settings.sfxEnabled]);
 
   // Timer
   useEffect(() => {
@@ -442,7 +458,8 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
 
   return (
     <div
-      className={`h-full min-h-screen flex flex-col ${theme.tableStyle} ${theme.tableImageUrl ? 'bg-cover bg-center bg-no-repeat bg-fixed' : ''} p-4 sm:p-8 pb-32 sm:pb-40 font-sans transition-colors duration-500 overflow-y-auto overflow-x-hidden`}
+      ref={boardRef}
+      className={`h-full min-h-screen flex flex-col ${theme.tableStyle} ${theme.tableImageUrl ? 'bg-cover bg-center bg-no-repeat bg-fixed' : ''} p-4 sm:p-8 pb-32 sm:pb-40 font-sans transition-colors duration-500 overflow-y-auto overflow-x-hidden audio-reactive-board`}
       style={theme.tableImageUrl ? { backgroundImage: `url(${theme.tableImageUrl})` } : undefined}
     >
       {/* Header */}

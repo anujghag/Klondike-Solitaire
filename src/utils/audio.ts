@@ -3,6 +3,8 @@
 // Lazy initialization of AudioContext so it doesn't block the main thread
 // and only starts when user interacts (which is required by browsers anyway)
 let audioCtx: AudioContext | null = null;
+let analyserNode: AnalyserNode | null = null;
+let analyserData: Uint8Array<ArrayBuffer> | null = null;
 
 const getContext = (): AudioContext => {
     if (!audioCtx) {
@@ -12,6 +14,37 @@ const getContext = (): AudioContext => {
         audioCtx.resume();
     }
     return audioCtx;
+};
+
+/**
+ * Returns the shared AnalyserNode, creating it lazily.
+ * All sounds should connect to this node instead of ctx.destination directly.
+ */
+const getMasterNode = (): AudioNode => {
+    const ctx = getContext();
+    if (!analyserNode) {
+        analyserNode = ctx.createAnalyser();
+        analyserNode.fftSize = 256;
+        analyserNode.smoothingTimeConstant = 0.6;
+        analyserNode.connect(ctx.destination);
+        analyserData = new Uint8Array(analyserNode.frequencyBinCount);
+    }
+    return analyserNode;
+};
+
+/**
+ * Returns a normalised 0–1 audio amplitude value.
+ * Call this in a requestAnimationFrame loop to drive CSS reactivity.
+ */
+export const getAudioReactivity = (): number => {
+    if (!analyserNode || !analyserData) return 0;
+    analyserNode.getByteTimeDomainData(analyserData);
+    let max = 0;
+    for (let i = 0; i < analyserData.length; i++) {
+        const v = Math.abs(analyserData[i] - 128);
+        if (v > max) max = v;
+    }
+    return max / 128; // normalise to 0–1
 };
 
 // ─── INTERNALS ────────────────────────────────────────────────────────────────
@@ -67,7 +100,7 @@ const createShapedNoise = (
     source.connect(lowShelf);
     lowShelf.connect(highShelf);
     highShelf.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(getMasterNode());
 
     source.start(t);
     source.stop(t + duration);
@@ -92,7 +125,7 @@ const createThud = (freq: number, duration: number, gain: number) => {
     gainNode.gain.exponentialRampToValueAtTime(0.0001, t + duration);
 
     osc.connect(gainNode);
-    gainNode.connect(ctx.destination);
+    gainNode.connect(getMasterNode());
     osc.start(t);
     osc.stop(t + duration);
 };
@@ -172,7 +205,7 @@ export const playErrorSound = () => {
         gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
 
         osc.connect(gain);
-        gain.connect(ctx.destination);
+        gain.connect(getMasterNode());
         osc.start(t);
         osc.stop(t + 0.2);
     } catch (e) { }
@@ -221,11 +254,11 @@ export const playVictorySound = () => {
 
             osc.connect(oscGain);
             overtone.connect(overtoneGain);
-            oscGain.connect(ctx.destination);
-            overtoneGain.connect(ctx.destination);
+            oscGain.connect(getMasterNode());
+            overtoneGain.connect(getMasterNode());
             oscGain.connect(delay);
             delay.connect(delayGain);
-            delayGain.connect(ctx.destination);
+            delayGain.connect(getMasterNode());
 
             osc.start(t);
             osc.stop(t + duration + 0.3);
