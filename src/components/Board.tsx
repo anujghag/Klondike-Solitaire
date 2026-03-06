@@ -7,6 +7,7 @@ import { dealGame } from '../utils/deck';
 import { Undo2, Lightbulb, FastForward, Settings, Trophy, Cpu, AlertTriangle } from 'lucide-react';
 import { VictoryAnimation } from './VictoryAnimation';
 import { Analyzer } from './Analyzer';
+import { Advisor } from './Advisor';
 import { findWinningPath, applyMove, GameMove, translateMoveToHint } from '../utils/solver';
 import { playCardDealSound, playCardMoveSound, playErrorSound, playVictorySound, playCardPlaceSound, playCardFlipSound, getAudioReactivity } from '../utils/audio';
 import { ParticleOverlay, ParticleOverlayHandle } from './ParticleOverlay';
@@ -664,6 +665,9 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
 
       {/* Particle Canvas Overlay */}
       <ParticleOverlay ref={particleRef} />
+
+      {/* The Advisor — atmospheric narrator */}
+      <Advisor gameState={gameState} theme={theme} />
     </div>
   );
 };
