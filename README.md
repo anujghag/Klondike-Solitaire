@@ -74,6 +74,11 @@
   * ✨ **The Ascent** (Ethereal Light, Draw 3) — Valley floor to summit
   * ⚔️ **Swarajya Campaign** (Maratha Glory, Draw 3) — Five forts, five battles
 
+## 📦 Packaging & Distribution (Native Apps)
+
+* **Desktop Application (Tauri)**: The web game is encapsulated into an ultra-lightweight (~5MB) standalone executable for Windows, Mac, and Linux using Tauri. This leverages the host OS's native WebView (WebKit or Edge WebView2) instead of bundling a massive Chromium browser like Electron.
+* **Mobile Application (Capacitor)**: The same codebase runs flawlessly on Android and iOS via Ionic's Capacitor v6 engine. Native Web Audio and CSS 3D transforms interact perfectly with the mobile WebView, delivering a premium 60fps app experience on phones and tablets.
+
 ## 🚀 Run Locally
 
 **Prerequisites:** Node.js (v18+)
