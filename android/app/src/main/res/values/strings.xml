@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Klondike Solitaire Premium</string>
+    <string name="title_activity_main">Klondike Solitaire Premium</string>
+    <string name="package_name">com.premium.klondike</string>
+    <string name="custom_url_scheme">com.premium.klondike</string>
+</resources>
