@@ -4,6 +4,7 @@ import { Menu } from './components/Menu';
 import { Difficulty, Theme, Stats, Achievement, GameSettings } from './types';
 import { DEFAULT_THEME, THEMES } from './themes';
 import { ROGUELITE_RUNS } from './utils/seedDifficulty';
+import { WINNABLE_SEEDS_DRAW_3 } from './utils/knownSeeds';
 
 const INITIAL_ACHIEVEMENTS: Achievement[] = [
   { id: 'first_win', name: 'First Victory', description: 'Win your first game of Solitaire.', unlocked: false },
@@ -166,7 +167,6 @@ export default function App() {
     const today = new Date().toISOString().split('T')[0];
     if (settings.customSeed !== undefined) {
       // Check if this seed matches today's daily seed
-      const WINNABLE_SEEDS_DRAW_3 = require('../utils/knownSeeds').WINNABLE_SEEDS_DRAW_3;
       let hash = 0;
       for (let i = 0; i < today.length; i++) {
         hash = ((hash << 5) - hash + today.charCodeAt(i)) | 0;
@@ -207,7 +207,6 @@ export default function App() {
       setActiveRunId(null);
     }
 
-    alert(`You won!\nScore: ${gameStats.score}\nTime: ${gameStats.time}s\nMoves: ${gameStats.moves}`);
     setGameState('menu');
   };
 
