@@ -15,12 +15,15 @@ import { ParticleOverlay, ParticleOverlayHandle } from './ParticleOverlay';
 interface BoardProps {
   settings: GameSettings;
   theme: Theme;
+  resumeState?: GameState;
+  onSaveState?: (state: GameState | null) => void;
   onWin: (stats: { time: number; moves: number; score: number }) => void;
   onMenu: () => void;
 }
 
-export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) => {
+export const Board: React.FC<BoardProps> = ({ settings, theme, resumeState, onSaveState, onWin, onMenu }) => {
   const [gameState, setGameState] = useState<GameState>(() => {
+    if (resumeState) return resumeState;
     const initialState = dealGame(settings.difficulty === 'easy' ? 1 : 3, settings.customSeed);
     if (settings.scoringType === 'vegas') initialState.score = -52;
     return initialState;
@@ -66,8 +69,14 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
     if (checkWin(gameState.foundations) && !isWon) {
       if (settings.sfxEnabled) playVictorySound();
       setIsWon(true);
+      onSaveState?.(null); // clear the resume save — this game is done
     }
   }, [gameState.foundations, isWon]);
+
+  // Auto-save after every move so an app restart never loses the game
+  useEffect(() => {
+    if (!isWon) onSaveState?.(gameState);
+  }, [gameState, isWon]);
 
   // Background Dead-End Detection & Hint Calculation
   useEffect(() => {
@@ -109,13 +118,8 @@ export const Board: React.FC<BoardProps> = ({ settings, theme, onWin, onMenu }) 
   const saveHistory = (state: GameState) => {
     setFullHistory(prev => [...prev, state]);
     if (settings.difficulty === 'hard') return; // No undos in hard mode
-    setHistory(prev => {
-      const newHistory = [...prev, state];
-      if (settings.difficulty === 'normal' && newHistory.length > 3) {
-        return newHistory.slice(newHistory.length - 3); // Limit to 3 undos
-      }
-      return newHistory;
-    });
+    // Unlimited undo on Easy & Normal — limited undo is a top app-store complaint.
+    setHistory(prev => [...prev, state]);
   };
 
   const handleUndo = () => {

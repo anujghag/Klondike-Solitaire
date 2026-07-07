@@ -1,10 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Board } from './components/Board';
 import { Menu } from './components/Menu';
-import { Difficulty, Theme, Stats, Achievement, GameSettings } from './types';
+import { GameHub } from './components/GameHub';
+import { Theme, Stats, Achievement, GameSettings, GameState, GameId, MultiGameStats } from './types';
 import { DEFAULT_THEME, THEMES } from './themes';
 import { ROGUELITE_RUNS } from './utils/seedDifficulty';
 import { WINNABLE_SEEDS_DRAW_3 } from './utils/knownSeeds';
+import { SpiderBoard } from './games/spider/SpiderBoard';
+import { SpiderState, SpiderSuits } from './games/spider/logic';
+import { FreeCellBoard } from './games/freecell/FreeCellBoard';
+import { FreeCellState } from './games/freecell/logic';
+import { SevensBoard } from './games/sevens/SevensBoard';
+import { BluffBoard } from './games/bluff/BluffBoard';
+import { MendikotBoard } from './games/mendikot/MendikotBoard';
+import {
+  saveInProgress, loadInProgress, clearInProgress, hasInProgress,
+  loadMultiGameStats, recordGameResult,
+} from './utils/gameSave';
+import { ArrowLeft } from 'lucide-react';
 
 const INITIAL_ACHIEVEMENTS: Achievement[] = [
   { id: 'first_win', name: 'First Victory', description: 'Win your first game of Solitaire.', unlocked: false },
@@ -39,11 +52,23 @@ const DEFAULT_SETTINGS: GameSettings = {
   autoPlayEnabled: false,
 };
 
+type Screen = 'hub' | 'klondike-menu' | 'klondike' | 'spider' | 'freecell' | 'sevens' | 'bluff' | 'mendikot';
+
+interface KlondikeSave { state: GameState; settings: GameSettings }
+interface SpiderSave { state: SpiderState; suits: SpiderSuits }
+
 export default function App() {
-  const [gameState, setGameState] = useState<'menu' | 'playing'>('menu');
+  const [screen, setScreen] = useState<Screen>('hub');
   const [settings, setSettings] = useState<GameSettings>(DEFAULT_SETTINGS);
   const [theme, setTheme] = useState<Theme>(DEFAULT_THEME);
   const [stats, setStats] = useState<Stats>(DEFAULT_STATS);
+  const [multiStats, setMultiStats] = useState<MultiGameStats>(() => loadMultiGameStats());
+
+  // Per-launch resume payloads
+  const [klondikeResume, setKlondikeResume] = useState<GameState | undefined>(undefined);
+  const [spiderSuits, setSpiderSuits] = useState<SpiderSuits>(1);
+  const [spiderResume, setSpiderResume] = useState<SpiderState | undefined>(undefined);
+  const [freecellResume, setFreecellResume] = useState<FreeCellState | undefined>(undefined);
 
   useEffect(() => {
     const savedStats = localStorage.getItem('solitaire_stats');
@@ -92,30 +117,51 @@ export default function App() {
     localStorage.setItem('solitaire_theme', JSON.stringify(newTheme));
   };
 
+  // ─── Klondike (classic flow, unchanged mechanics) ─────────────────────────
+
   const handleStart = (newSettings: GameSettings) => {
     setSettings(newSettings);
     localStorage.setItem('solitaire_settings', JSON.stringify(newSettings));
 
-    // Increment total games
     const newStats = { ...stats };
     newStats.totalGames = { ...stats.totalGames };
     newStats.totalGames[newSettings.difficulty]++;
+    // Starting fresh over an unfinished saved game abandons it → streak resets.
+    if (hasInProgress('klondike')) {
+      newStats.currentStreak = { ...newStats.currentStreak, [newSettings.difficulty]: 0 };
+      clearInProgress('klondike');
+    }
     saveStats(newStats);
 
-    setGameState('playing');
+    setKlondikeResume(undefined);
+    setScreen('klondike');
   };
 
-  // — Roguelite Runs —
+  const handleResumeKlondike = () => {
+    const save = loadInProgress<KlondikeSave>('klondike');
+    if (!save) return;
+    setSettings(save.settings);
+    setKlondikeResume(save.state);
+    setScreen('klondike');
+  };
+
+  const handleKlondikeSaveState = useCallback((state: GameState | null) => {
+    if (state === null) clearInProgress('klondike');
+    else setSettings(current => {
+      saveInProgress<KlondikeSave>('klondike', { state, settings: current });
+      return current;
+    });
+  }, []);
+
+  // ─── Roguelite Runs ────────────────────────────────────────────────────────
+
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
 
   const handleStartRun = (newSettings: GameSettings, runId: string) => {
     const run = ROGUELITE_RUNS.find(r => r.id === runId);
     if (!run) return;
-
-    // Switch to the run's theme
     const runTheme = THEMES.find(t => t.id === run.themeId);
     if (runTheme) handleThemeChange(runTheme);
-
     setActiveRunId(runId);
     handleStart(newSettings);
   };
@@ -124,7 +170,6 @@ export default function App() {
     const newStats = { ...stats };
     const diff = settings.difficulty;
 
-    // Update basic stats
     newStats.totalWins = { ...stats.totalWins };
     newStats.highScores = { ...stats.highScores };
     newStats.fastestTimes = { ...stats.fastestTimes };
@@ -147,7 +192,6 @@ export default function App() {
 
     newStats.themeWins[theme.id] = (newStats.themeWins[theme.id] || 0) + 1;
 
-    // Check achievements
     const ach = [...newStats.achievements];
     const unlock = (id: string) => {
       const a = ach.find(x => x.id === id);
@@ -157,8 +201,6 @@ export default function App() {
     unlock('first_win');
     if (gameStats.time < 180) unlock('speed_demon');
     if (settings.difficulty === 'hard') unlock('hard_master');
-    // Note: Flawless is harder to track without passing undo count from Board, 
-    // but we can assume it's unlocked if they win hard mode (since no undos allowed)
     if (settings.difficulty === 'hard') unlock('flawless');
 
     newStats.achievements = ach;
@@ -166,7 +208,6 @@ export default function App() {
     // Daily Challenge tracking
     const today = new Date().toISOString().split('T')[0];
     if (settings.customSeed !== undefined) {
-      // Check if this seed matches today's daily seed
       let hash = 0;
       for (let i = 0; i < today.length; i++) {
         hash = ((hash << 5) - hash + today.charCodeAt(i)) | 0;
@@ -174,7 +215,6 @@ export default function App() {
       const dailySeed = WINNABLE_SEEDS_DRAW_3[Math.abs(hash) % WINNABLE_SEEDS_DRAW_3.length];
       if (settings.customSeed === dailySeed && !newStats.completedDailies?.includes(today)) {
         newStats.completedDailies = [...(newStats.completedDailies || []), today];
-        // Calculate streak
         let streak = 1;
         const d = new Date();
         while (true) {
@@ -191,14 +231,15 @@ export default function App() {
     }
 
     saveStats(newStats);
+    setMultiStats(recordGameResult('klondike', { won: true, score: gameStats.score, time: gameStats.time }));
+    clearInProgress('klondike');
 
-    // Roguelite Run progress
     if (activeRunId) {
       const runStatsUpdate = { ...newStats };
       runStatsUpdate.runProgress = { ...(runStatsUpdate.runProgress || {}) };
       const currentProgress = runStatsUpdate.runProgress[activeRunId] || 0;
       runStatsUpdate.runProgress[activeRunId] = currentProgress + 1;
-      
+
       const run = ROGUELITE_RUNS.find(r => r.id === activeRunId);
       if (run && runStatsUpdate.runProgress[activeRunId] >= run.seeds.length) {
         runStatsUpdate.completedRuns = [...(runStatsUpdate.completedRuns || []), activeRunId];
@@ -207,38 +248,180 @@ export default function App() {
       setActiveRunId(null);
     }
 
-    setGameState('menu');
+    setScreen('klondike-menu');
   };
 
-  const handleAbandon = () => {
-    const newStats = { ...stats };
-    newStats.currentStreak = { ...stats.currentStreak };
-    newStats.currentStreak[settings.difficulty] = 0;
-    saveStats(newStats);
+  // ─── New games: launch + result recording ─────────────────────────────────
+
+  const handlePlaySpider = (suits: SpiderSuits, resume: boolean) => {
+    if (resume) {
+      const save = loadInProgress<SpiderSave>('spider');
+      if (save) {
+        setSpiderSuits(save.suits);
+        setSpiderResume(save.state);
+        setScreen('spider');
+        return;
+      }
+    }
+    clearInProgress('spider');
+    setSpiderSuits(suits);
+    setSpiderResume(undefined);
+    setScreen('spider');
   };
 
-  return (
-    <>
-      {gameState === 'menu' ? (
-        <Menu
-          stats={stats}
-          currentTheme={theme}
-          currentSettings={settings}
-          onStart={handleStart}
-          onStartRun={handleStartRun}
+  const handleSpiderSave = useCallback((state: SpiderState | null) => {
+    if (state === null) clearInProgress('spider');
+    else setSpiderSuits(current => {
+      saveInProgress<SpiderSave>('spider', { state, suits: current });
+      return current;
+    });
+  }, []);
+
+  const handlePlayFreeCell = (resume: boolean) => {
+    if (resume) {
+      const save = loadInProgress<FreeCellState>('freecell');
+      if (save) {
+        setFreecellResume(save);
+        setScreen('freecell');
+        return;
+      }
+    }
+    clearInProgress('freecell');
+    setFreecellResume(undefined);
+    setScreen('freecell');
+  };
+
+  const handleFreeCellSave = useCallback((state: FreeCellState | null) => {
+    if (state === null) clearInProgress('freecell');
+    else saveInProgress('freecell', state);
+  }, []);
+
+  const record = useCallback((game: GameId, result: { won: boolean; score?: number; time?: number; special?: boolean }) => {
+    setMultiStats(recordGameResult(game, result));
+  }, []);
+
+  const goHub = useCallback(() => setScreen('hub'), []);
+
+  // ─── Render ────────────────────────────────────────────────────────────────
+
+  const saves: Partial<Record<GameId, boolean>> = screen === 'hub' ? {
+    klondike: hasInProgress('klondike'),
+    spider: hasInProgress('spider'),
+    freecell: hasInProgress('freecell'),
+  } : {};
+
+  switch (screen) {
+    case 'hub':
+      return (
+        <GameHub
+          theme={theme}
+          themes={THEMES}
           onThemeChange={handleThemeChange}
+          multiStats={multiStats}
+          klondikeWins={stats.totalWins.easy + stats.totalWins.normal + stats.totalWins.hard}
+          dailyStreak={stats.dailyStreak}
+          saves={saves}
+          onOpenKlondike={() => setScreen('klondike-menu')}
+          onResumeKlondike={handleResumeKlondike}
+          onPlaySpider={handlePlaySpider}
+          onPlayFreeCell={handlePlayFreeCell}
+          onPlaySevens={() => setScreen('sevens')}
+          onPlayBluff={() => setScreen('bluff')}
+          onPlayMendikot={() => setScreen('mendikot')}
         />
-      ) : (
+      );
+
+    case 'klondike-menu':
+      return (
+        <div className="relative">
+          <button
+            onClick={goHub}
+            className="fixed top-4 left-4 z-50 flex items-center gap-2 px-4 py-2 bg-black/60 hover:bg-black/80 text-white text-sm font-bold rounded-full backdrop-blur-sm ring-1 ring-white/20 transition-colors"
+          >
+            <ArrowLeft size={16} /> All Games
+          </button>
+          <Menu
+            stats={stats}
+            currentTheme={theme}
+            currentSettings={settings}
+            onStart={handleStart}
+            onStartRun={handleStartRun}
+            onThemeChange={handleThemeChange}
+          />
+        </div>
+      );
+
+    case 'klondike':
+      return (
         <Board
           settings={settings}
           theme={theme}
+          resumeState={klondikeResume}
+          onSaveState={handleKlondikeSaveState}
           onWin={handleWin}
-          onMenu={() => {
-            handleAbandon();
-            setGameState('menu');
-          }}
+          onMenu={() => setScreen('klondike-menu')}
         />
-      )}
-    </>
-  );
+      );
+
+    case 'spider':
+      return (
+        <SpiderBoard
+          theme={theme}
+          suitCount={spiderSuits}
+          sfxEnabled={settings.sfxEnabled}
+          resumeState={spiderResume}
+          onSaveState={handleSpiderSave}
+          onWin={({ time, score }) => {
+            record('spider', { won: true, score, time, special: spiderSuits === 4 });
+            goHub();
+          }}
+          onExit={goHub}
+        />
+      );
+
+    case 'freecell':
+      return (
+        <FreeCellBoard
+          theme={theme}
+          sfxEnabled={settings.sfxEnabled}
+          resumeState={freecellResume}
+          onSaveState={handleFreeCellSave}
+          onWin={({ time, score }) => {
+            record('freecell', { won: true, score, time });
+            goHub();
+          }}
+          onExit={goHub}
+        />
+      );
+
+    case 'sevens':
+      return (
+        <SevensBoard
+          theme={theme}
+          sfxEnabled={settings.sfxEnabled}
+          onFinish={(won) => record('sevens', { won })}
+          onExit={goHub}
+        />
+      );
+
+    case 'bluff':
+      return (
+        <BluffBoard
+          theme={theme}
+          sfxEnabled={settings.sfxEnabled}
+          onFinish={(won) => record('bluff', { won })}
+          onExit={goHub}
+        />
+      );
+
+    case 'mendikot':
+      return (
+        <MendikotBoard
+          theme={theme}
+          sfxEnabled={settings.sfxEnabled}
+          onFinish={(won, isMendikot) => record('mendikot', { won, special: isMendikot })}
+          onExit={goHub}
+        />
+      );
+  }
 }

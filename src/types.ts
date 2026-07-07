@@ -55,6 +55,20 @@ export interface Stats {
   completedRuns: string[];              // runIds of fully completed gauntlets
 }
 
+// ─── Multi-game hub ───────────────────────────────────────────────────────────
+
+export type GameId = 'klondike' | 'spider' | 'freecell' | 'sevens' | 'bluff' | 'mendikot';
+
+export interface GameRecord {
+  games: number;
+  wins: number;
+  bestScore: number;
+  bestTime: number;   // seconds; 0 = none recorded
+  special: number;    // game-specific: Mendikots won, 4-suit Spider wins, etc.
+}
+
+export type MultiGameStats = Partial<Record<GameId, GameRecord>>;
+
 export interface SuitStyle {
   text: string;
   symbol: string;
