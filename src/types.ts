@@ -57,7 +57,10 @@ export interface Stats {
 
 // ─── Multi-game hub ───────────────────────────────────────────────────────────
 
-export type GameId = 'klondike' | 'spider' | 'freecell' | 'sevens' | 'bluff' | 'mendikot';
+export type GameId =
+  | 'klondike' | 'spider' | 'freecell' | 'tripeaks' | 'pyramid'
+  | 'sevens' | 'bluff' | 'mendikot' | 'courtpiece' | 'teenpatti' | 'rummy'
+  | 'hearts';
 
 export interface GameRecord {
   games: number;

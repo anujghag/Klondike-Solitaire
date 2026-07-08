@@ -13,6 +13,12 @@ import { FreeCellState } from './games/freecell/logic';
 import { SevensBoard } from './games/sevens/SevensBoard';
 import { BluffBoard } from './games/bluff/BluffBoard';
 import { MendikotBoard } from './games/mendikot/MendikotBoard';
+import { TriPeaksBoard } from './games/tripeaks/TriPeaksBoard';
+import { PyramidBoard } from './games/pyramid/PyramidBoard';
+import { HeartsBoard } from './games/hearts/HeartsBoard';
+import { CourtPieceBoard } from './games/courtpiece/CourtPieceBoard';
+import { TeenPattiBoard } from './games/teenpatti/TeenPattiBoard';
+import { RummyBoard } from './games/rummy/RummyBoard';
 import {
   saveInProgress, loadInProgress, clearInProgress, hasInProgress,
   loadMultiGameStats, recordGameResult,
@@ -52,7 +58,9 @@ const DEFAULT_SETTINGS: GameSettings = {
   autoPlayEnabled: false,
 };
 
-type Screen = 'hub' | 'klondike-menu' | 'klondike' | 'spider' | 'freecell' | 'sevens' | 'bluff' | 'mendikot';
+type Screen =
+  | 'hub' | 'klondike-menu' | 'klondike' | 'spider' | 'freecell' | 'sevens' | 'bluff' | 'mendikot'
+  | 'tripeaks' | 'pyramid' | 'hearts' | 'courtpiece' | 'teenpatti' | 'rummy';
 
 interface KlondikeSave { state: GameState; settings: GameSettings }
 interface SpiderSave { state: SpiderState; suits: SpiderSuits }
@@ -328,6 +336,7 @@ export default function App() {
           onPlaySevens={() => setScreen('sevens')}
           onPlayBluff={() => setScreen('bluff')}
           onPlayMendikot={() => setScreen('mendikot')}
+          onPlayOther={(id) => setScreen(id as Screen)}
         />
       );
 
@@ -420,6 +429,74 @@ export default function App() {
           theme={theme}
           sfxEnabled={settings.sfxEnabled}
           onFinish={(won, isMendikot) => record('mendikot', { won, special: isMendikot })}
+          onExit={goHub}
+        />
+      );
+
+    case 'tripeaks':
+      return (
+        <TriPeaksBoard
+          theme={theme}
+          sfxEnabled={settings.sfxEnabled}
+          onWin={({ time, score }) => {
+            record('tripeaks', { won: true, score, time });
+            goHub();
+          }}
+          onLose={() => record('tripeaks', { won: false })}
+          onExit={goHub}
+        />
+      );
+
+    case 'pyramid':
+      return (
+        <PyramidBoard
+          theme={theme}
+          sfxEnabled={settings.sfxEnabled}
+          onWin={({ time, score }) => {
+            record('pyramid', { won: true, score, time });
+            goHub();
+          }}
+          onLose={() => record('pyramid', { won: false })}
+          onExit={goHub}
+        />
+      );
+
+    case 'hearts':
+      return (
+        <HeartsBoard
+          theme={theme}
+          sfxEnabled={settings.sfxEnabled}
+          onFinish={(won, shotMoon) => record('hearts', { won, special: shotMoon })}
+          onExit={goHub}
+        />
+      );
+
+    case 'courtpiece':
+      return (
+        <CourtPieceBoard
+          theme={theme}
+          sfxEnabled={settings.sfxEnabled}
+          onFinish={(won, isKot) => record('courtpiece', { won, special: isKot })}
+          onExit={goHub}
+        />
+      );
+
+    case 'teenpatti':
+      return (
+        <TeenPattiBoard
+          theme={theme}
+          sfxEnabled={settings.sfxEnabled}
+          onFinish={(won) => record('teenpatti', { won })}
+          onExit={goHub}
+        />
+      );
+
+    case 'rummy':
+      return (
+        <RummyBoard
+          theme={theme}
+          sfxEnabled={settings.sfxEnabled}
+          onFinish={(won) => record('rummy', { won })}
           onExit={goHub}
         />
       );

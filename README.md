@@ -1,9 +1,25 @@
 <div align="center">
-  <h1>Klondike Solitaire: Premium Edition</h1>
-  <p>A highly customizable, visually stunning React & TypeScript implementation of classic Solitaire.</p>
+  <h1>The Card Pavilion</h1>
+  <p>Twelve premium card games — zero ads, fully offline, one gorgeous theme engine.<br/>
+  Built from real App Store / Google Play review research (see <code>MARKET_FEEDBACK.md</code>).</p>
 </div>
 
-## ✨ Core Features
+## 🎪 The Games
+
+| Solitaire Studio | 🇮🇳 Desi Classics | 🌍 World Table |
+|---|---|---|
+| **Klondike** — daily challenges, AI solver, roguelite runs | **Teen Patti** (तीन पत्ती) — blind/chaal betting vs 3 AI, play-chips only | **Hearts** — duck the Black Lady or shoot the moon |
+| **Spider** — 1/2/4 suits, two decks, eight runs | **Indian Rummy** (रमी) — 13 cards, wild jokers, live declare validation via an exact-cover meld solver | _Coming: 29, Callbreak, Gin Rummy, Euchre, Spades_ |
+| **FreeCell** — supermoves, safe auto-collect | **Bluff / Challenge** (चैलेंज) — AI opponents with suspicion & bluffing models | |
+| **TriPeaks** — streak multipliers | **Mendikot** (मेंढीकोट) — 2v2 tens-capture trick-taking with a partner-aware AI | |
+| **Pyramid** — pair to 13, two recycles | **Court Piece / Hokm** (कोट पीस) — call the hukum, first team to 7 tricks | |
+| | **Satte pe Satta** (सत्ते पे सत्ता) — Sevens with unblocking AI | |
+
+Every game shares the hub's theme engine (4 illustrated themes), procedural Web Audio
+SFX, particle celebrations, per-game lifetime stats, and — for the solitaire games —
+auto-save with one-tap resume. Multiplayer games are offline vs. named AI personalities.
+
+## ✨ Klondike Core Features
 
 * **Premium Theme Engine**: Choose between 4 gorgeous, fully-illustrated aesthetic themes — each with its own card artwork, table felt, font family, suit color palette, and card-back design. Theme selection persists across sessions via `localStorage`:
   * 🌌 **Abyssal Void** — Inspired by *Lord of the Mysteries*. Deep starfield backgrounds, fog overlays, and silver-on-dark card faces with radial gradient accents

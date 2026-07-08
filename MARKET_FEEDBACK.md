@@ -52,7 +52,31 @@ versions of:
   release (Teen Patti & Rummy require chip economies; 29 and Court Piece fit the
   existing trick-taking engine built for Mendikot).
 
-## 4. Sources
+## 4. Wave 2 — expanding the roster (Indian + international demand)
+
+Global signals: one in five mobile gamers plays a digital card game regularly; the card
+game market is projected at ~$9.8B. Solitaire variants (TriPeaks, Pyramid, Spider,
+FreeCell) dominate Western casual play — Microsoft Solitaire Collection made TriPeaks
+and Pyramid household names. Hearts remains the most popular trick-taking game in the
+English-speaking world (Windows bundling legacy). Rummy is the most popular casual
+multiplayer card family worldwide — Indian online rummy platforms alone report 100M+
+registered users.
+
+Prioritized roster additions, chosen for demand × engine reuse:
+
+| Priority | Game | Market | Why |
+|----------|------|--------|-----|
+| ✅ Shipped | **TriPeaks** | International | #2 mode in Microsoft Solitaire Collection; fast dopamine loops |
+| ✅ Shipped | **Pyramid** | International | #3 mode in MSC; "pair to 13" is instantly learnable |
+| ✅ Shipped | **Hearts** | International | Most-loved trick-taker; Windows nostalgia; reuses trick engine |
+| ✅ Shipped | **Court Piece (Hokm/Coat Pees)** | India/Pakistan/Iran | Huge in North India; 2v2, first to 7 tricks; reuses Mendikot engine |
+| ✅ Shipped | **Teen Patti** | India | India's #1 grossing card genre; play-chips only (no real money) |
+| ✅ Shipped | **Indian Rummy (13-card)** | India | 100M+ player market; pure-sequence rules, wild jokers |
+| Next | 29 (Twenty-Nine) | Bengal/Bangladesh | Bidding trick-taker; needs bidding UI |
+| Next | Andar Bahar, Callbreak | India/Nepal | Callbreak is Nepal/India's top multiplayer |
+| Next | Gin Rummy, Euchre, Spades | US | Natural follow-ons to the Rummy + trick engines |
+
+## 5. Sources
 
 - https://play.google.com/store/apps/details?id=at.ner.SolitaireKlondike
 - https://apps.apple.com/us/app/solitaire/id359917414
@@ -63,3 +87,7 @@ versions of:
 - https://play.google.com/store/apps/details?id=com.teenpatti.hd.gold
 - https://play.google.com/store/apps/details?id=com.octro.rummy
 - https://app.appfigures.com/top-apps/google-play/india/games/card
+- https://www.statista.com/topics/9940/card-game-and-puzzle-market-worldwide/
+- https://solitairewave.com/articles/most-popular-card-games/
+- https://www.similarweb.com/top-apps/google/games/cards/
+- https://www.amraandelma.com/card-game-marketing-statistics/

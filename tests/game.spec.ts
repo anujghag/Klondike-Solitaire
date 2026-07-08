@@ -101,3 +101,61 @@ test('mendikot table renders teams and trump', async ({ page }) => {
   await expect(page.getByText(/Ravi \+ Suresh/)).toBeVisible();
   await expect(page.getByText('Trump', { exact: true })).toBeVisible();
 });
+
+test('tripeaks renders board with stock and streak', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('[data-game="tripeaks"]').getByRole('button', { name: 'Play' }).click();
+  await expect(page.getByText('TriPeaks', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Draw from stock' })).toBeVisible();
+  await expect(page.getByText('Streak')).toBeVisible();
+});
+
+test('pyramid renders with recycles counter', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('[data-game="pyramid"]').getByRole('button', { name: 'Play' }).click();
+  await expect(page.getByText('Pyramid', { exact: true })).toBeVisible();
+  await expect(page.getByText('Recycles')).toBeVisible();
+  // Draw works
+  await page.getByRole('button', { name: 'Draw from stock' }).click();
+  await expect(page.getByText('23', { exact: true })).toBeVisible();
+});
+
+test('hearts renders and enforces 2 of clubs opening', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('[data-game="hearts"]').getByRole('button', { name: 'Play' }).click();
+  await expect(page.getByText('Hearts', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(/2♣/)).toBeVisible();
+  for (const name of ['Nina', 'Omar', 'Lily']) {
+    await expect(page.getByText(name, { exact: true })).toBeVisible();
+  }
+});
+
+test('court piece renders teams and hukum', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('[data-game="courtpiece"]').getByRole('button', { name: 'Play' }).click();
+  await expect(page.getByText('Court Piece', { exact: true })).toBeVisible();
+  await expect(page.getByText('Hukum', { exact: true })).toBeVisible();
+  await expect(page.getByText(/You \+ Zoya/)).toBeVisible();
+});
+
+test('teen patti deals with pot and actions', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('[data-game="teenpatti"]').getByRole('button', { name: 'Play' }).click();
+  await expect(page.getByText('Teen Patti', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Pot: ₹40/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'See cards' })).toBeVisible();
+  // Seeing reveals the hand label
+  await page.getByRole('button', { name: 'See cards' }).click();
+  await expect(page.getByText(/Trail!|Pure Sequence|Sequence|Color|Pair|High Card/)).toBeVisible();
+});
+
+test('rummy deals 13 cards with wild joker', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('[data-game="rummy"]').getByRole('button', { name: 'Play' }).click();
+  await expect(page.getByText('Indian Rummy', { exact: true })).toBeVisible();
+  await expect(page.getByText('Joker')).toBeVisible();
+  await expect(page.getByText(/are wild/)).toBeVisible();
+  // Draw from stock, then hand shows 14 cards and discard hint appears
+  await page.getByRole('button', { name: 'Draw from stock' }).click();
+  await expect(page.getByText('Tap a card to discard it')).toBeVisible();
+});
