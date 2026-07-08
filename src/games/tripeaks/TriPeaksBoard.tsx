@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Theme } from '../../types';
-import { Card } from '../../components/Card';
+import { Card, CardBackContent } from '../../components/Card';
 import { GameHeader, HeaderButton } from '../shared/GameHeader';
 import { VictoryAnimation } from '../../components/VictoryAnimation';
 import { ParticleOverlay, ParticleOverlayHandle } from '../../components/ParticleOverlay';
@@ -156,10 +156,9 @@ export const TriPeaksBoard: React.FC<TriPeaksBoardProps> = ({ theme, sfxEnabled,
       {/* Stock + waste */}
       <div className="flex justify-center items-end gap-6 mt-4">
         <button onClick={handleDraw} disabled={state.stock.length === 0} className="relative disabled:opacity-40" aria-label="Draw from stock">
-          <div
-            className="w-16 sm:w-24 aspect-[2/3] rounded-lg ring-1 ring-white/25 shadow-xl bg-zinc-800 overflow-hidden"
-            style={theme.cardBackImageUrl ? { backgroundImage: `url(${theme.cardBackImageUrl})`, backgroundSize: 'cover' } : undefined}
-          />
+          <div className="w-16 sm:w-24 aspect-[2/3] shadow-xl">
+            <CardBackContent theme={theme} />
+          </div>
           <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
             {state.stock.length}
           </span>

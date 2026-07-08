@@ -88,6 +88,8 @@ export interface Theme {
   cardBack: string;
   cardBackImageUrl?: string;
   showCharacters: boolean;
+  /** Cartoon themes: render these emoji as the card's centre art per suit. */
+  suitEmojis?: Partial<Record<Suit, string>>;
   suitStyles: {
     hearts: SuitStyle;
     diamonds: SuitStyle;

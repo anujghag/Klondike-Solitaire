@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card as CardType, Theme } from '../../types';
-import { Card } from '../../components/Card';
+import { Card, CardBackContent } from '../../components/Card';
 import { GameHeader, HeaderButton } from '../shared/GameHeader';
 import { VictoryAnimation } from '../../components/VictoryAnimation';
 import { ParticleOverlay, ParticleOverlayHandle } from '../../components/ParticleOverlay';
@@ -206,11 +206,9 @@ export const SpiderBoard: React.FC<SpiderBoardProps> = ({
           aria-label="Deal from stock"
         >
           {Array.from({ length: Math.max(dealsLeft, 1) }).map((_, i) => (
-            <div
-              key={i}
-              className="w-7 sm:w-14 aspect-[2/3] -ml-4 sm:-ml-6 first:ml-0 rounded-md sm:rounded-lg ring-1 ring-white/20 shadow-lg overflow-hidden bg-zinc-800"
-              style={theme.cardBackImageUrl ? { backgroundImage: `url(${theme.cardBackImageUrl})`, backgroundSize: 'cover' } : undefined}
-            />
+            <div key={i} className="w-7 sm:w-14 aspect-[2/3] -ml-4 sm:-ml-6 first:ml-0 shadow-lg">
+              <CardBackContent theme={theme} />
+            </div>
           ))}
           <span className="text-white/80 text-[11px] sm:text-sm font-bold ml-1 whitespace-nowrap">
             {state.stock.length > 0 ? `Deal (${dealsLeft})` : 'Stock empty'}

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Theme } from '../../types';
-import { Card } from '../../components/Card';
+import { Card, CardBackContent } from '../../components/Card';
 import { GameHeader, HeaderButton } from '../shared/GameHeader';
 import { PlayerSeat } from '../shared/PlayerSeat';
 import { HandFan } from '../shared/HandFan';
@@ -115,10 +115,9 @@ export const RummyBoard: React.FC<RummyBoardProps> = ({ theme, sfxEnabled, onFin
       {/* Table: stock, discard, wild card */}
       <div className="flex justify-center items-end gap-5 sm:gap-8 mb-3">
         <button onClick={() => handleDraw('stock')} className="relative group" aria-label="Draw from stock">
-          <div
-            className={`w-16 sm:w-24 aspect-[2/3] rounded-lg ring-1 ring-white/25 shadow-xl bg-zinc-800 overflow-hidden transition-transform ${isMyTurn && state.phase === 'draw' ? 'group-hover:-translate-y-1 ring-2 ring-amber-400/70' : ''}`}
-            style={theme.cardBackImageUrl ? { backgroundImage: `url(${theme.cardBackImageUrl})`, backgroundSize: 'cover' } : undefined}
-          />
+          <div className={`w-16 sm:w-24 aspect-[2/3] shadow-xl rounded-lg transition-transform ${isMyTurn && state.phase === 'draw' ? 'group-hover:-translate-y-1 ring-2 ring-amber-400/70' : ''}`}>
+            <CardBackContent theme={theme} />
+          </div>
           <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">Stock</span>
         </button>
         <div className="relative">
