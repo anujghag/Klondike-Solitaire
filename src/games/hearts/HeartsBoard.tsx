@@ -3,6 +3,7 @@ import { Theme } from '../../types';
 import { Card } from '../../components/Card';
 import { GameHeader, HeaderButton } from '../shared/GameHeader';
 import { PlayerSeat } from '../shared/PlayerSeat';
+import { HandFan } from '../shared/HandFan';
 import { playCardMoveSound, playCardPlaceSound, playErrorSound, playVictorySound } from '../../utils/audio';
 import { RotateCcw } from 'lucide-react';
 import { randomSeed } from '../shared/cards';
@@ -153,26 +154,24 @@ export const HeartsBoard: React.FC<HeartsBoardProps> = ({ theme, sfxEnabled, onF
         <div className="mb-2 flex justify-center">
           <PlayerSeat name="You" avatar="🧑" compact cardCount={state.hands[0].length} isTurn={state.turn === 0} isYou />
         </div>
-        <div className="flex justify-center">
-          <div className="flex -space-x-6 sm:-space-x-8">
-            {state.hands[0].map(card => {
-              const playable = state.turn === 0 && legalIds.has(card.id);
-              return (
-                <div
-                  key={card.id}
-                  className={`w-14 sm:w-20 transition-transform duration-200 ${playable ? 'hover:-translate-y-4 cursor-pointer' : state.turn === 0 ? 'opacity-50' : ''}`}
-                >
-                  <Card
-                    card={card}
-                    theme={theme}
-                    onClick={() => handlePlay(card.id)}
-                    className={playable ? 'ring-2 ring-amber-400/80 shadow-[0_0_12px_rgba(251,191,36,0.4)]' : ''}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <HandFan
+          cards={state.hands[0]}
+          wrapperClass={card => {
+            const playable = state.turn === 0 && legalIds.has(card.id);
+            return playable ? 'hover:-translate-y-4 cursor-pointer' : state.turn === 0 ? 'opacity-50' : '';
+          }}
+          renderCard={card => {
+            const playable = state.turn === 0 && legalIds.has(card.id);
+            return (
+              <Card
+                card={card}
+                theme={theme}
+                onClick={() => handlePlay(card.id)}
+                className={playable ? 'ring-2 ring-amber-400/80 shadow-[0_0_12px_rgba(251,191,36,0.4)]' : ''}
+              />
+            );
+          }}
+        />
       </div>
 
       {/* Result overlay */}

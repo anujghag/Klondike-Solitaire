@@ -3,6 +3,7 @@ import { Suit, Theme } from '../../types';
 import { Card } from '../../components/Card';
 import { GameHeader, HeaderButton } from '../shared/GameHeader';
 import { PlayerSeat } from '../shared/PlayerSeat';
+import { HandFan } from '../shared/HandFan';
 import { playCardMoveSound, playCardPlaceSound, playErrorSound, playVictorySound } from '../../utils/audio';
 import { RotateCcw } from 'lucide-react';
 import { randomSeed, SUITS } from '../shared/cards';
@@ -107,12 +108,12 @@ export const CourtPieceBoard: React.FC<CourtPieceBoardProps> = ({ theme, sfxEnab
         </HeaderButton>
       </GameHeader>
 
-      <div className="flex justify-center gap-4 text-[11px] sm:text-xs mb-3">
-        <span className="px-3 py-1 rounded-full bg-sky-500/20 text-sky-200 ring-1 ring-sky-400/40 font-bold">
-          🔵 You + Zoya — {state.tricksWon[0]}/7
+      <div className="flex justify-center gap-2 sm:gap-4 text-[10px] sm:text-xs mb-3">
+        <span className="px-2.5 sm:px-3 py-1 rounded-full bg-sky-500/20 text-sky-200 ring-1 ring-sky-400/40 font-bold whitespace-nowrap">
+          🔵 You + Zoya · {state.tricksWon[0]}/7
         </span>
-        <span className="px-3 py-1 rounded-full bg-rose-500/20 text-rose-200 ring-1 ring-rose-400/40 font-bold">
-          🔴 Imran + Farhan — {state.tricksWon[1]}/7
+        <span className="px-2.5 sm:px-3 py-1 rounded-full bg-rose-500/20 text-rose-200 ring-1 ring-rose-400/40 font-bold whitespace-nowrap">
+          🔴 Imran + Farhan · {state.tricksWon[1]}/7
         </span>
       </div>
 
@@ -164,26 +165,24 @@ export const CourtPieceBoard: React.FC<CourtPieceBoardProps> = ({ theme, sfxEnab
         <div className="mb-2 flex justify-center">
           <PlayerSeat name="You" avatar="🧑" compact cardCount={state.hands[0].length} isTurn={state.turn === 0 && !pickingTrump} isYou teamColor="ring-sky-400/50" />
         </div>
-        <div className="flex justify-center">
-          <div className="flex -space-x-6 sm:-space-x-8">
-            {state.hands[0].map(card => {
-              const playable = state.turn === 0 && !pickingTrump && legalIds.has(card.id);
-              return (
-                <div
-                  key={card.id}
-                  className={`w-14 sm:w-20 transition-transform duration-200 ${playable ? 'hover:-translate-y-4 cursor-pointer' : state.turn === 0 && !pickingTrump ? 'opacity-50' : ''}`}
-                >
-                  <Card
-                    card={card}
-                    theme={theme}
-                    onClick={() => handlePlay(card.id)}
-                    className={playable ? 'ring-2 ring-amber-400/80 shadow-[0_0_12px_rgba(251,191,36,0.4)]' : ''}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <HandFan
+          cards={state.hands[0]}
+          wrapperClass={card => {
+            const playable = state.turn === 0 && !pickingTrump && legalIds.has(card.id);
+            return playable ? 'hover:-translate-y-4 cursor-pointer' : state.turn === 0 && !pickingTrump ? 'opacity-50' : '';
+          }}
+          renderCard={card => {
+            const playable = state.turn === 0 && !pickingTrump && legalIds.has(card.id);
+            return (
+              <Card
+                card={card}
+                theme={theme}
+                onClick={() => handlePlay(card.id)}
+                className={playable ? 'ring-2 ring-amber-400/80 shadow-[0_0_12px_rgba(251,191,36,0.4)]' : ''}
+              />
+            );
+          }}
+        />
       </div>
 
       {/* Trump picker (human caller) */}

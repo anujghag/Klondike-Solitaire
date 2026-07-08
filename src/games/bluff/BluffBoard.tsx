@@ -3,6 +3,7 @@ import { Rank, Theme } from '../../types';
 import { Card } from '../../components/Card';
 import { GameHeader, HeaderButton } from '../shared/GameHeader';
 import { PlayerSeat } from '../shared/PlayerSeat';
+import { HandFan } from '../shared/HandFan';
 import { playCardMoveSound, playCardPlaceSound, playErrorSound, playVictorySound } from '../../utils/audio';
 import { RotateCcw, Swords } from 'lucide-react';
 import { RANKS, randomSeed } from '../shared/cards';
@@ -208,23 +209,18 @@ export const BluffBoard: React.FC<BluffBoardProps> = ({ theme, sfxEnabled, onFin
         <div className="mb-2 flex justify-center">
           <PlayerSeat name="You" avatar="🧑" compact cardCount={state.hands[0].length} isTurn={isMyTurn} isYou />
         </div>
-        <div className="flex justify-center">
-          <div className="flex flex-wrap justify-center -space-x-5 sm:-space-x-7">
-            {state.hands[0].map(card => (
-              <div
-                key={card.id}
-                className={`w-12 sm:w-[4.5rem] transition-transform duration-150 cursor-pointer ${selected.has(card.id) ? '-translate-y-4' : 'hover:-translate-y-2'}`}
-              >
-                <Card
-                  card={card}
-                  theme={theme}
-                  onClick={() => toggleSelect(card.id)}
-                  className={selected.has(card.id) ? 'ring-4 ring-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.5)]' : ''}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+        <HandFan
+          cards={state.hands[0]}
+          wrapperClass={card => `cursor-pointer ${selected.has(card.id) ? '-translate-y-4' : 'hover:-translate-y-2'}`}
+          renderCard={card => (
+            <Card
+              card={card}
+              theme={theme}
+              onClick={() => toggleSelect(card.id)}
+              className={selected.has(card.id) ? 'ring-4 ring-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.5)]' : ''}
+            />
+          )}
+        />
       </div>
 
       {/* Rank picker */}

@@ -198,34 +198,34 @@ export const SpiderBoard: React.FC<SpiderBoardProps> = ({
       </GameHeader>
 
       {/* Stock + completed runs strip */}
-      <div className="max-w-6xl mx-auto w-full flex justify-between items-center mb-3 px-1">
+      <div className="max-w-6xl mx-auto w-full flex flex-wrap justify-between items-center gap-2 mb-3 px-1">
         <button
           onClick={handleDeal}
           disabled={state.stock.length === 0}
-          className="relative flex items-center gap-2 disabled:opacity-40"
+          className="relative flex items-center gap-1.5 disabled:opacity-40 shrink-0"
           aria-label="Deal from stock"
         >
           {Array.from({ length: Math.max(dealsLeft, 1) }).map((_, i) => (
             <div
               key={i}
-              className="w-10 sm:w-14 aspect-[2/3] -ml-6 first:ml-0 rounded-lg ring-1 ring-white/20 shadow-lg overflow-hidden bg-zinc-800"
+              className="w-7 sm:w-14 aspect-[2/3] -ml-4 sm:-ml-6 first:ml-0 rounded-md sm:rounded-lg ring-1 ring-white/20 shadow-lg overflow-hidden bg-zinc-800"
               style={theme.cardBackImageUrl ? { backgroundImage: `url(${theme.cardBackImageUrl})`, backgroundSize: 'cover' } : undefined}
             />
           ))}
-          <span className="text-white/80 text-xs sm:text-sm font-bold ml-1">
-            {state.stock.length > 0 ? `Deal (${dealsLeft} left)` : 'Stock empty'}
+          <span className="text-white/80 text-[11px] sm:text-sm font-bold ml-1 whitespace-nowrap">
+            {state.stock.length > 0 ? `Deal (${dealsLeft})` : 'Stock empty'}
           </span>
         </button>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1">
           {state.completedRuns.map((suit, i) => (
-            <div key={i} className="w-8 sm:w-10 aspect-[2/3] rounded bg-black/40 ring-1 ring-amber-400/50 flex items-center justify-center text-lg sm:text-2xl shadow-[0_0_10px_rgba(251,191,36,0.3)]">
+            <div key={i} className="w-5 sm:w-10 aspect-[2/3] rounded bg-black/40 ring-1 ring-amber-400/50 flex items-center justify-center text-xs sm:text-2xl shadow-[0_0_10px_rgba(251,191,36,0.3)]">
               <span className={suit === 'hearts' || suit === 'diamonds' ? 'text-rose-400' : 'text-zinc-200'}>
                 {{ hearts: '♥', diamonds: '♦', clubs: '♣', spades: '♠' }[suit]}
               </span>
             </div>
           ))}
           {Array.from({ length: 8 - state.completedRuns.length }).map((_, i) => (
-            <div key={`e-${i}`} className="w-8 sm:w-10 aspect-[2/3] rounded border border-dashed border-white/15" />
+            <div key={`e-${i}`} className="w-5 sm:w-10 aspect-[2/3] rounded border border-dashed border-white/15" />
           ))}
         </div>
       </div>

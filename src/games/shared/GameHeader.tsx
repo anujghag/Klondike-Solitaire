@@ -18,9 +18,9 @@ interface GameHeaderProps {
 
 /** Shared translucent header bar used by every game board. */
 export const GameHeader: React.FC<GameHeaderProps> = ({ title, subtitle, stats, onExit, children, banner }) => (
-  <div className="flex flex-wrap justify-between items-center gap-3 mb-4 sm:mb-6 bg-black/25 p-3 sm:p-4 rounded-xl text-white shadow-lg backdrop-blur-sm relative">
+  <div className="flex flex-wrap justify-between items-center gap-x-3 gap-y-1.5 mb-3 sm:mb-6 bg-black/25 p-2 sm:p-4 rounded-xl text-white shadow-lg backdrop-blur-sm relative">
     {banner}
-    <div className="flex items-center gap-3 sm:gap-6 min-w-0">
+    <div className="flex items-center gap-2 sm:gap-6 min-w-0 flex-1">
       <button
         onClick={onExit}
         className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors shrink-0"
@@ -28,20 +28,20 @@ export const GameHeader: React.FC<GameHeaderProps> = ({ title, subtitle, stats, 
       >
         <ArrowLeft size={18} />
       </button>
-      <div className="flex flex-col min-w-0">
+      <div className="flex flex-col min-w-0 shrink">
         <span className="text-sm sm:text-lg font-bold tracking-wide truncate">{title}</span>
         {subtitle && <span className="text-[10px] sm:text-xs opacity-60 uppercase tracking-widest truncate">{subtitle}</span>}
       </div>
-      <div className="flex items-center gap-3 sm:gap-6 pl-2 sm:pl-4 border-l border-white/10">
+      <div className="flex items-center gap-2.5 sm:gap-6 pl-2 sm:pl-4 border-l border-white/10 shrink-0">
         {stats.map(s => (
           <div key={s.label} className="flex flex-col">
-            <span className="text-[9px] sm:text-[10px] uppercase tracking-wider opacity-60">{s.label}</span>
-            <span className={`text-base sm:text-xl font-mono font-bold leading-tight ${s.accent ?? ''}`}>{s.value}</span>
+            <span className="text-[8px] sm:text-[10px] uppercase tracking-wider opacity-60 whitespace-nowrap">{s.label}</span>
+            <span className={`text-sm sm:text-xl font-mono font-bold leading-tight whitespace-nowrap ${s.accent ?? ''}`}>{s.value}</span>
           </div>
         ))}
       </div>
     </div>
-    <div className="flex gap-2 flex-wrap">{children}</div>
+    <div className="flex gap-1.5 sm:gap-2 flex-wrap">{children}</div>
   </div>
 );
 

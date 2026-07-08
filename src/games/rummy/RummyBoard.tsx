@@ -3,6 +3,7 @@ import { Theme } from '../../types';
 import { Card } from '../../components/Card';
 import { GameHeader, HeaderButton } from '../shared/GameHeader';
 import { PlayerSeat } from '../shared/PlayerSeat';
+import { HandFan } from '../shared/HandFan';
 import { playCardDealSound, playCardMoveSound, playErrorSound, playVictorySound } from '../../utils/audio';
 import { RotateCcw, Sparkles } from 'lucide-react';
 import { randomSeed } from '../shared/cards';
@@ -158,31 +159,25 @@ export const RummyBoard: React.FC<RummyBoardProps> = ({ theme, sfxEnabled, onFin
         <div className="mb-2 flex justify-center">
           <PlayerSeat name="You" avatar="🧑" compact cardCount={myHand.length} isTurn={isMyTurn} isYou />
         </div>
-        <div className="flex justify-center">
-          <div className="flex flex-wrap justify-center -space-x-5 sm:-space-x-6">
-            {myHand.map(card => {
-              const wild = isWild(card, state.wildRank);
-              const isWinner = winners.has(card.id);
-              const canDiscard = isMyTurn && state.phase === 'discard';
-              return (
-                <div
-                  key={card.id}
-                  className={`w-12 sm:w-[4.4rem] transition-transform duration-150 ${canDiscard ? 'hover:-translate-y-3 cursor-pointer' : ''}`}
-                >
-                  <Card
-                    card={card}
-                    theme={theme}
-                    onClick={() => handleDiscard(card.id)}
-                    className={
-                      isWinner ? 'ring-4 ring-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.6)] animate-pulse' :
-                      wild ? 'ring-2 ring-purple-400/80 shadow-[0_0_10px_rgba(192,132,252,0.4)]' : ''
-                    }
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <HandFan
+          cards={myHand}
+          wrapperClass={() => (isMyTurn && state.phase === 'discard') ? 'hover:-translate-y-3 cursor-pointer' : ''}
+          renderCard={card => {
+            const wild = isWild(card, state.wildRank);
+            const isWinner = winners.has(card.id);
+            return (
+              <Card
+                card={card}
+                theme={theme}
+                onClick={() => handleDiscard(card.id)}
+                className={
+                  isWinner ? 'ring-4 ring-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.6)] animate-pulse' :
+                  wild ? 'ring-2 ring-purple-400/80 shadow-[0_0_10px_rgba(192,132,252,0.4)]' : ''
+                }
+              />
+            );
+          }}
+        />
         <p className="text-center text-white/35 text-[11px] mt-2">
           {isMyTurn && state.phase === 'draw' ? 'Draw from the stock or the discard pile' :
            isMyTurn ? 'Tap a card to discard it' : ''}

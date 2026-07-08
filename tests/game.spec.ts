@@ -50,11 +50,11 @@ test('spider deals, moves counter and undo work', async ({ page }) => {
 
   // Deal a row from the stock (legal at game start: all columns filled)
   await page.getByRole('button', { name: 'Deal from stock' }).click();
-  await expect(page.getByText('5 left')).toBeHidden(); // 5 deals initially → after one deal shows 4
+  await expect(page.getByText('Deal (4)')).toBeVisible(); // 5 deals initially → 4 after one deal
 
   // Undo restores the stock
   await page.getByRole('button', { name: 'Undo' }).click();
-  await expect(page.getByText(/Deal \(5 left\)/)).toBeVisible();
+  await expect(page.getByText('Deal (5)')).toBeVisible();
 
   await page.getByRole('button', { name: 'Back to games' }).click();
   await expect(page.getByText('The Card Pavilion')).toBeVisible();
@@ -120,11 +120,11 @@ test('pyramid renders with recycles counter', async ({ page }) => {
   await expect(page.getByText('23', { exact: true })).toBeVisible();
 });
 
-test('hearts renders and enforces 2 of clubs opening', async ({ page }) => {
+test('hearts renders players and points tracking', async ({ page }) => {
   await page.goto('/');
   await page.locator('[data-game="hearts"]').getByRole('button', { name: 'Play' }).click();
   await expect(page.getByText('Hearts', { exact: true }).first()).toBeVisible();
-  await expect(page.getByText(/2♣/)).toBeVisible();
+  await expect(page.getByText('Your pts')).toBeVisible();
   for (const name of ['Nina', 'Omar', 'Lily']) {
     await expect(page.getByText(name, { exact: true })).toBeVisible();
   }
@@ -158,4 +158,39 @@ test('rummy deals 13 cards with wild joker', async ({ page }) => {
   // Draw from stock, then hand shows 14 cards and discard hint appears
   await page.getByRole('button', { name: 'Draw from stock' }).click();
   await expect(page.getByText('Tap a card to discard it')).toBeVisible();
+});
+
+test.describe('mobile (5-inch, 360px)', () => {
+  test.use({ viewport: { width: 360, height: 740 }, hasTouch: true });
+
+  test('mendikot 13-card hand fits the screen and cards are tappable', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('[data-game="mendikot"]').getByRole('button', { name: 'Play' }).click();
+    await expect(page.getByText('Mendikot', { exact: true })).toBeVisible();
+    // No horizontal document overflow
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBe(0);
+    // Wait for the hand fan to measure and render, then check bounds
+    await expect(page.locator('[data-handfan]')).toBeVisible();
+    const boxes = await page.evaluate(() => {
+      const fan = document.querySelector('[data-handfan]')!;
+      const rects = Array.from(fan.children).map(c => c.getBoundingClientRect());
+      return { count: rects.length, minX: Math.min(...rects.map(r => r.left)), maxX: Math.max(...rects.map(r => r.right)) };
+    });
+    expect(boxes.count).toBe(13);
+    expect(boxes.minX).toBeGreaterThanOrEqual(0);
+    expect(boxes.maxX).toBeLessThanOrEqual(360);
+  });
+
+  test('spider fits 10 columns and strip on a phone', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('[data-game="spider"]').getByRole('button', { name: 'Play' }).click();
+    await expect(page.getByText('Deal (5)')).toBeVisible();
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBe(0);
+    // 10th column exists and its right edge is on screen
+    const box = await page.locator('[data-spider-col="9"]').boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.x + box!.width).toBeLessThanOrEqual(361);
+  });
 });
