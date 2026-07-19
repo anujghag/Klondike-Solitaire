@@ -18,7 +18,53 @@ interface CardProps {
 
 // ─── Card Back Renderers ──────────────────────────────────────────────────────
 
-const CardBackContent: React.FC<{ theme: Theme; onClick?: () => void; style?: React.CSSProperties }> = ({ theme, onClick, style }) => {
+/** CSS-only back designs for the themed decks that don't ship painted art. */
+const GENERIC_BACKS: Record<string, { bg: string; pattern: string; emoji: string; ring: string }> = {
+  'ocean-back': {
+    bg: 'bg-blue-950 bg-[radial-gradient(ellipse_at_bottom,_#0e7490_0%,_#172554_55%,_#020617_100%)]',
+    pattern: 'bg-[repeating-radial-gradient(circle_at_50%_120%,transparent_0px,transparent_14px,rgba(103,232,249,0.12)_15px,transparent_17px)]',
+    emoji: '🌊', ring: 'border-cyan-300/60',
+  },
+  'jungle-back': {
+    bg: 'bg-green-950 bg-[radial-gradient(ellipse_at_top,_#166534_0%,_#052e16_60%,_#010b04_100%)]',
+    pattern: 'bg-[repeating-linear-gradient(60deg,transparent_0px,transparent_16px,rgba(134,239,172,0.10)_17px,transparent_19px),repeating-linear-gradient(-60deg,transparent_0px,transparent_16px,rgba(134,239,172,0.10)_17px,transparent_19px)]',
+    emoji: '🌿', ring: 'border-lime-300/60',
+  },
+  'space-back': {
+    bg: 'bg-black bg-[radial-gradient(ellipse_at_30%_20%,_#312e81_0%,_#0f0a2e_45%,_#000000_100%)]',
+    pattern: 'bg-[radial-gradient(rgba(255,255,255,0.85)_1px,transparent_1px)] [background-size:22px_22px] [background-position:4px_6px] opacity-60',
+    emoji: '🪐', ring: 'border-indigo-300/60',
+  },
+  'valentine-back': {
+    bg: 'bg-rose-800 bg-[radial-gradient(ellipse_at_top,_#fb7185_0%,_#e11d48_55%,_#881337_100%)]',
+    pattern: 'bg-[repeating-linear-gradient(45deg,transparent_0px,transparent_12px,rgba(255,228,230,0.16)_13px,transparent_15px)]',
+    emoji: '💘', ring: 'border-pink-200/70',
+  },
+  'pets-back': {
+    bg: 'bg-sky-600 bg-[radial-gradient(ellipse_at_top,_#7dd3fc_0%,_#0284c7_60%,_#1e3a8a_100%)]',
+    pattern: 'bg-[repeating-linear-gradient(90deg,transparent_0px,transparent_18px,rgba(255,255,255,0.14)_19px,transparent_21px)]',
+    emoji: '🐯', ring: 'border-amber-200/80',
+  },
+};
+
+export const CardBackContent: React.FC<{ theme: Theme; onClick?: () => void; style?: React.CSSProperties }> = ({ theme, onClick, style }) => {
+  const generic = GENERIC_BACKS[theme.cardBack];
+  if (!theme.cardBackImageUrl && generic) {
+    return (
+      <div
+        className={`w-full h-full rounded-lg shadow-md flex items-center justify-center overflow-hidden relative border-[1px] sm:border-2 border-white/30 ${generic.bg}`}
+        style={style}
+        onClick={onClick}
+      >
+        <div className={`absolute inset-0 ${generic.pattern}`} />
+        <div className={`absolute inset-2 sm:inset-3 rounded-md border ${generic.ring} opacity-70`} />
+        <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-full border-2 ${generic.ring} bg-black/25 backdrop-blur-[1px] flex items-center justify-center text-xl sm:text-3xl shadow-[0_0_18px_rgba(0,0,0,0.4)]`}>
+          {generic.emoji}
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
+      </div>
+    );
+  }
   if (theme.cardBackImageUrl) {
     return (
       <div
@@ -207,7 +253,13 @@ export const Card: React.FC<CardProps> = ({
       <div className={`${suitStyleClass.symbol} z-10 flex flex-col items-center justify-center w-full h-full px-2 pointer-events-none`}>
         {(!imageUrl || imageFailed) && (
           <>
-            <div className="text-3xl sm:text-4xl md:text-5xl mb-1 sm:mb-2">{suitSymbol}</div>
+            {theme.suitEmojis?.[card.suit] ? (
+              <div className="text-3xl sm:text-5xl md:text-6xl mb-1 sm:mb-2 drop-shadow-[0_3px_6px_rgba(0,0,0,0.35)]">
+                {theme.suitEmojis[card.suit]}
+              </div>
+            ) : (
+              <div className="text-3xl sm:text-4xl md:text-5xl mb-1 sm:mb-2">{suitSymbol}</div>
+            )}
             {theme.showCharacters && character && (
               <div className={`flex flex-col items-center text-center ${suitStyleClass.text} bg-black/40 backdrop-blur-sm px-2 py-1 rounded w-[90%] border border-white/5 shadow-md`}>
                 {character.title && (

@@ -10,6 +10,11 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
+    // Use a pre-installed Chromium when the playwright-pinned build
+    // isn't downloaded (e.g. sandboxed CI environments).
+    launchOptions: process.env.PW_CHROMIUM_PATH
+      ? { executablePath: process.env.PW_CHROMIUM_PATH }
+      : undefined,
   },
   projects: [
     {

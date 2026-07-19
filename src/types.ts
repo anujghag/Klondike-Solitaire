@@ -55,6 +55,23 @@ export interface Stats {
   completedRuns: string[];              // runIds of fully completed gauntlets
 }
 
+// ─── Multi-game hub ───────────────────────────────────────────────────────────
+
+export type GameId =
+  | 'klondike' | 'spider' | 'freecell' | 'tripeaks' | 'pyramid'
+  | 'sevens' | 'bluff' | 'mendikot' | 'courtpiece' | 'teenpatti' | 'rummy'
+  | 'hearts';
+
+export interface GameRecord {
+  games: number;
+  wins: number;
+  bestScore: number;
+  bestTime: number;   // seconds; 0 = none recorded
+  special: number;    // game-specific: Mendikots won, 4-suit Spider wins, etc.
+}
+
+export type MultiGameStats = Partial<Record<GameId, GameRecord>>;
+
 export interface SuitStyle {
   text: string;
   symbol: string;
@@ -71,6 +88,8 @@ export interface Theme {
   cardBack: string;
   cardBackImageUrl?: string;
   showCharacters: boolean;
+  /** Cartoon themes: render these emoji as the card's centre art per suit. */
+  suitEmojis?: Partial<Record<Suit, string>>;
   suitStyles: {
     hearts: SuitStyle;
     diamonds: SuitStyle;
